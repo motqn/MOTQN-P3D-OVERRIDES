@@ -1,0 +1,67 @@
+/* Add your custom CSS rules here */
+.motqn-flex {
+    display: flex;
+    gap: 20px;
+}
+.motqn-left {
+    flex-grow: 1;
+}
+.motqn-summary {
+    width: 300px; /* Adjust as needed */
+    flex-shrink: 0;
+}
+.motqn-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+}
+.motqn-card-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.motqn-dropzone {
+   border: 2px dashed #ccc;
+   padding: 30px;
+   text-align: center;
+   margin-bottom: 20px;
+   background-color: #f9f9f9;
+   border-radius: 8px;
+}
+.motqn-dropzone.motqn-drag {
+    border-color: #aaa;
+    background-color: #f0f0f0;
+}
+.motqn-btn {
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.motqn-btn.motqn-primary {
+    background-color: #0073aa; /* Example primary color */
+    color: white;
+    border-color: #0073aa;
+}
+/* Add all other styles for cards, thumbnails, rows, controls, colors, etc. */
+.motqn-offscreen {
+   position: absolute !important;
+   height: 1px; 
+   width: 1px;
+   overflow: hidden;
+   clip: rect(1px, 1px, 1px, 1px);
+   white-space: nowrap; /* Prevent line breaks */
+}
+
+/* Styles from your original motqn-p3d-ui.js might include:
+   .motqn-item, .motqn-item-main, .motqn-thumb, .motqn-item-body, .motqn-title, 
+   .motqn-under-thumb, .motqn-status-lines, .motqn-row, .motqn-label, .motqn-control,
+   .motqn-chip, .motqn-chip-active, .motqn-select, .motqn-material, .motqn-colors,
+   .motqn-color, .motqn-color-text, .motqn-qty, .motqn-notes, .motqn-price-row,
+   .motqn-price-label, .motqn-price, .motqn-card-actions, .motqn-link, 
+   .motqn-duplicate, .motqn-delete, .motqn-card, #motqn-chip-preview, etc. 
+*/
