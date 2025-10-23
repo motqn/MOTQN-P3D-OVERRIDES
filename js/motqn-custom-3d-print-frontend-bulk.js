@@ -1774,10 +1774,25 @@ function p3dShowResponseBulk(obj, model_stats) {
 	else 
 		html_price = accounting.formatMoney(price, p3d.currency_symbol, p3d.price_num_decimals, p3d.thousand_sep, p3d.decimal_sep);
 
-	p3d.analyse_queue[file_id].html_price = html_price; //todo bulk price update
-	p3d.analyse_queue[file_id].price = price;
+        p3d.analyse_queue[file_id].html_price = html_price; //todo bulk price update
+        p3d.analyse_queue[file_id].price = price;
 
-	jQuery(obj).find('.plupload_file_price').html(html_price);
+        jQuery(obj).find('.plupload_file_price').html(html_price);
+
+        var readyStatus = (typeof p3d.text_bulk_ready_for_checkout !== 'undefined' && p3d.text_bulk_ready_for_checkout)
+                ? p3d.text_bulk_ready_for_checkout
+                : 'Ready for checkout';
+
+        jQuery(obj).find('.plupload_file_status').html(readyStatus);
+
+        if (typeof p3d.analyse_queue[file_id] !== 'undefined') {
+                p3d.analyse_queue[file_id].html_status = readyStatus;
+                p3d.analyse_queue[file_id].status_stage = 'complete';
+        }
+
+        if (typeof window !== 'undefined' && typeof window.motqnSyncCardStatus === 'function') {
+                window.motqnSyncCardStatus(jQuery(obj));
+        }
 }
 
 function p3dSubmitFormBulk() {
@@ -1872,8 +1887,7 @@ function p3dCheckAllFinished() {
         if (p3d.all_finished) {
                 p3dDebugLog('All files finished; enabling submission controls.');
                 jQuery('.p3d-button-loader').hide();
-                jQuery('#p3d-submit-button').prop('disabled', false);
-                jQuery('#p3d-submit-button').show();
+                jQuery('#p3d-submit-button').prop('disabled', false).addClass('motqn-hidden-submit');
                 jQuery('#p3d-bulk-uploader_browse').show();
                 jQuery('.p3d-stats-bulk').find('select').prop('disabled', false);
                 jQuery('.motqn-summary__primary').prop('disabled', false).removeClass('motqn-button--disabled');
@@ -1881,8 +1895,7 @@ function p3dCheckAllFinished() {
         else {
                 p3dDebugLog('Waiting for files to finish; disabling submission controls.');
                 jQuery('.p3d-button-loader').show();
-                jQuery('#p3d-submit-button').prop('disabled', true);
-                //jQuery('#p3d-submit-button').hide();
+                jQuery('#p3d-submit-button').prop('disabled', true).addClass('motqn-hidden-submit');
                 jQuery('#p3d-bulk-uploader_browse').hide();
                 jQuery('.p3d-stats-bulk').find('select').prop('disabled', true);
                 jQuery('.motqn-summary__primary').prop('disabled', true).addClass('motqn-button--disabled');
@@ -1894,6 +1907,16 @@ function p3dCheckAllFinished() {
 jQuery(document).ready(function(){
         p3dInitBulk();
         jQuery('#p3d-calculate-price-button').hide();
+        jQuery('#p3d-submit-button').addClass('motqn-hidden-submit');
+        jQuery(document).on('click', '.motqn-summary__primary', function(event) {
+                if (jQuery(this).prop('disabled')) {
+                        event.preventDefault();
+                        return;
+                }
+
+                event.preventDefault();
+                jQuery('#p3d-submit-button').trigger('click');
+        });
         p3dScheduleAutoAnalysis(200);
 });
 

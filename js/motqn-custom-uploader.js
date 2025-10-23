@@ -77,9 +77,145 @@ used as it is.
 	var uploaders = {};
 	var analyse_queue = {};
 
-	function _(str) {
-		return plupload.translate(str) || str;
-	}
+        function _(str) {
+                return plupload.translate(str) || str;
+        }
+
+        function motqnDecodeStatus(message) {
+                if (typeof message === 'undefined' || message === null) {
+                        return '';
+                }
+                if (typeof message === 'number') {
+                        return message.toString();
+                }
+                return $('<textarea />').html(message).text();
+        }
+
+        function motqnDetectStageFromMessage(message) {
+                var plain = motqnDecodeStatus(message).toLowerCase();
+                var trimmed = plain.trim();
+
+                if (!trimmed.length) {
+                        return '';
+                }
+
+                if (trimmed.indexOf('fail') !== -1 || trimmed.indexOf('error') !== -1) {
+                        return 'error';
+                }
+
+                if (trimmed.indexOf('analys') !== -1 || trimmed.indexOf('analyz') !== -1 || trimmed.indexOf('pricing') !== -1) {
+                        return 'analysis';
+                }
+
+                if (trimmed.indexOf('repair') !== -1 || trimmed.indexOf('triang') !== -1) {
+                        return 'repair';
+                }
+
+                if (trimmed.indexOf('upload') !== -1 || trimmed.indexOf('uploaded') !== -1) {
+                        return 'upload';
+                }
+
+                if (trimmed.indexOf('ready') !== -1 || trimmed.indexOf('complete') !== -1 || trimmed.indexOf('finished') !== -1 || trimmed.indexOf('100%') !== -1) {
+                        return 'complete';
+                }
+
+                return '';
+        }
+
+        function motqnFormatCardStatus(message) {
+                var decoded = motqnDecodeStatus(message);
+                var trimmed = decoded.trim();
+
+                if (!trimmed.length) {
+                        if (typeof message === 'string' && message.indexOf('&nbsp;') !== -1) {
+                                return { text: '\u00a0', stage: '' };
+                        }
+
+                        return { text: '', stage: '' };
+                }
+
+                var stage = motqnDetectStageFromMessage(message);
+                var prefix = '';
+
+                if (stage === 'upload' || stage === 'repair') {
+                        prefix = 'Step 1 · ';
+                } else if (stage === 'analysis') {
+                        prefix = 'Step 2 · ';
+                }
+
+                if (trimmed.toLowerCase().indexOf('step') === 0) {
+                        prefix = '';
+                }
+
+                return {
+                        text: prefix + trimmed,
+                        stage: stage
+                };
+        }
+
+        function motqnSyncCardStatus($item) {
+                if (!$item || !$item.length) {
+                        return;
+                }
+
+                var $status = $item.find('.plupload_file_status');
+                var $cardStatus = $item.find('.motqn-card__status');
+
+                if (!$status.length || !$cardStatus.length) {
+                        return;
+                }
+
+                var message = $status.html();
+                var formatted = motqnFormatCardStatus(message);
+
+                if (formatted.text === '\u00a0') {
+                        $cardStatus.html('&nbsp;');
+                } else if (formatted.text.length) {
+                        $cardStatus.text(formatted.text);
+                } else {
+                        $cardStatus.text('');
+                }
+
+                if (formatted.stage) {
+                        $cardStatus.attr('data-stage', formatted.stage);
+                } else {
+                        $cardStatus.removeAttr('data-stage');
+                }
+
+                var fileId = $item.attr('id');
+
+                if (fileId && typeof p3d !== 'undefined' && p3d.analyse_queue && typeof p3d.analyse_queue[fileId] !== 'undefined') {
+                        p3d.analyse_queue[fileId].status_stage = formatted.stage;
+                        p3d.analyse_queue[fileId].html_status = formatted.text;
+                }
+        }
+
+        function motqnAttachStatusObserver($item) {
+                if (!$item || !$item.length || typeof MutationObserver === 'undefined') {
+                        motqnSyncCardStatus($item);
+                        return;
+                }
+
+                var $status = $item.find('.plupload_file_status');
+
+                if (!$status.length) {
+                        return;
+                }
+
+                var observer = new MutationObserver(function() {
+                        motqnSyncCardStatus($item);
+                });
+
+                observer.observe($status[0], { childList: true, characterData: true, subtree: true });
+                $item.data('motqnStatusObserver', observer);
+                motqnSyncCardStatus($item);
+        }
+
+        if (typeof window !== 'undefined') {
+                window.motqnFormatCardStatus = window.motqnFormatCardStatus || motqnFormatCardStatus;
+                window.motqnSyncCardStatus = window.motqnSyncCardStatus || motqnSyncCardStatus;
+                window.motqnAttachStatusObserver = window.motqnAttachStatusObserver || motqnAttachStatusObserver;
+        }
 
         function renderUI(id, target) {
                 // Remove all existing non plupload items
@@ -137,7 +273,7 @@ used as it is.
                                                                         '</div>' +
                                                                 '</dl>' +
                                                                 '<div class="motqn-summary__actions">' +
-                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Add to Cart') + '</button>' +
                                                                         '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
                                                                 '</div>' +
                                                         '</div>' +
@@ -331,34 +467,75 @@ used as it is.
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
-						var html_stats = 'Click Calculate button to show stats';
-						var stats_style = '';
-						var html_thumb = '';
+                                                var html_stats = 'Automatic processing will show stats shortly';
+                                                var stats_style = '';
+                                                var html_thumb = '';
+                                                var status_stage = 'upload';
+                                                var placeholder_label = '';
 
-						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
-							if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
-								html_price = p3d.analyse_queue[file.id].html_price;
-							}
-							if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
-								html_status = p3d.analyse_queue[file.id].html_status;
-							}
-							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
-								html_stats = p3d.analyse_queue[file.id].html_stats;
-								stats_style = 'visibility:visible;';
-							}
-							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
-								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
-							}
+                                                if (typeof(file.name) === 'string' && file.name.length) {
+                                                        var placeholder_parts = file.name.split('.');
 
-								
-						}
-						fileList.append(
-							'<li class="p3d-filelist-item" id="' + file.id + '">' +
-								'<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_thumb+'</span></div>' +
-								'<div class="plupload_file_price">' + html_price + '</div>' +
-								'<div class="plupload_file_qty">' + '<input name="'+file.id+'_qty" type="number" min="1" step="1" value="1" onchange=p3dSelectQTYBulk(this)>' + '</div>' +
-								'<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
-								'<div class="plupload_file_status">' + html_status + '</div>' +
+                                                        if (placeholder_parts.length > 1) {
+                                                                placeholder_label = placeholder_parts.pop();
+                                                        } else {
+                                                                placeholder_label = file.name;
+                                                        }
+
+                                                        placeholder_label = placeholder_label.substring(0, 3);
+                                                }
+
+                                                placeholder_label = placeholder_label.replace(/[^a-z0-9]/gi, '');
+
+                                                if (!placeholder_label.length) {
+                                                        placeholder_label = '3D';
+                                                }
+
+                                                placeholder_label = placeholder_label.toUpperCase();
+
+                                                if (typeof plupload !== 'undefined' && typeof plupload.xmlEncode === 'function') {
+                                                        placeholder_label = plupload.xmlEncode(placeholder_label);
+                                                }
+
+                                                if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                        if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
+                                                                html_price = p3d.analyse_queue[file.id].html_price;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
+                                                                html_status = p3d.analyse_queue[file.id].html_status;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
+                                                                html_stats = p3d.analyse_queue[file.id].html_stats;
+                                                                stats_style = 'visibility:visible;';
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
+                                                                html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].status_stage)!='undefined' && p3d.analyse_queue[file.id].status_stage) {
+                                                                status_stage = p3d.analyse_queue[file.id].status_stage;
+                                                        }
+                                                }
+                                                if (typeof status_stage !== 'string' || !status_stage.length) {
+                                                        status_stage = 'upload';
+                                                }
+                                                var html_media = '<div class="motqn-card__media">';
+
+                                                if (html_thumb.length) {
+                                                        html_media += html_thumb;
+                                                }
+                                                else {
+                                                        html_media += '<span class="motqn-card__placeholder">' + placeholder_label + '</span>';
+                                                }
+
+                                                html_media += '<div class="motqn-card__status" data-stage="' + status_stage + '">' + html_status + '</div>';
+                                                html_media += '</div>';
+                                                fileList.append(
+                                                        '<li class="p3d-filelist-item" id="' + file.id + '">' +
+                                                                '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_media+'</span></div>' +
+                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
+                                                                '<div class="plupload_file_qty">' + '<input name="'+file.id+'_qty" type="number" min="1" step="1" value="1" onchange=p3dSelectQTYBulk(this)>' + '</div>' +
+                                                                '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
+                                                                '<div class="plupload_file_status">' + html_status + '</div>' +
 								'<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
 								'<div class="plupload_clearer">&nbsp;</div>' +
 								attributes +
@@ -372,10 +549,12 @@ used as it is.
 									html_stats+
 									'</div>'+
 								'</div>'+
-							'</div>'
-						);
+                                                        '</div>'
+                                                );
 
-						window.wp.event_manager.doAction( '3dprint.fileList_appended');
+                                                motqnAttachStatusObserver(fileList.children('li#' + file.id));
+
+                                                window.wp.event_manager.doAction( '3dprint.fileList_appended');
 
 						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
 							if (typeof(p3d.analyse_queue[file.id].material_id)!='undefined') {
@@ -853,7 +1032,7 @@ used as it is.
                                                                         '</div>' +
                                                                 '</dl>' +
                                                                 '<div class="motqn-summary__actions">' +
-                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Add to Cart') + '</button>' +
                                                                         '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
                                                                 '</div>' +
                                                         '</div>' +
@@ -1047,34 +1226,75 @@ used as it is.
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
-						var html_stats = 'Click Calculate button to show stats';
-						var stats_style = '';
-						var html_thumb = '';
+                                               var html_stats = 'Automatic processing will show stats shortly';
+                                               var stats_style = '';
+                                               var html_thumb = '';
+                                               var status_stage = 'upload';
+                                               var placeholder_label = '';
 
-						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
-							if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
-								html_price = p3d.analyse_queue[file.id].html_price;
-							}
-							if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
-								html_status = p3d.analyse_queue[file.id].html_status;
-							}
-							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
-								html_stats = p3d.analyse_queue[file.id].html_stats;
-								stats_style = 'visibility:visible;';
-							}
-							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
-								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
-							}
+                                               if (typeof(file.name) === 'string' && file.name.length) {
+                                                       var placeholder_parts = file.name.split('.');
 
-								
-						}
-						fileList.append(
-							'<li class="p3d-filelist-item" id="' + file.id + '">' +
-								'<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_thumb+'</span></div>' +
-								'<div class="plupload_file_price">' + html_price + '</div>' +
-								'<div class="plupload_file_qty">' + '<input name="'+file.id+'_qty" type="number" min="1" step="1" value="1" onchange=p3dSelectQTYBulk(this)>' + '</div>' +
-								'<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
-								'<div class="plupload_file_status">' + html_status + '</div>' +
+                                                       if (placeholder_parts.length > 1) {
+                                                               placeholder_label = placeholder_parts.pop();
+                                                       } else {
+                                                               placeholder_label = file.name;
+                                                       }
+
+                                                       placeholder_label = placeholder_label.substring(0, 3);
+                                               }
+
+                                               placeholder_label = placeholder_label.replace(/[^a-z0-9]/gi, '');
+
+                                               if (!placeholder_label.length) {
+                                                       placeholder_label = '3D';
+                                               }
+
+                                               placeholder_label = placeholder_label.toUpperCase();
+
+                                               if (typeof plupload !== 'undefined' && typeof plupload.xmlEncode === 'function') {
+                                                       placeholder_label = plupload.xmlEncode(placeholder_label);
+                                               }
+
+                                               if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                       if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
+                                                               html_price = p3d.analyse_queue[file.id].html_price;
+                                                       }
+                                                       if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
+                                                               html_status = p3d.analyse_queue[file.id].html_status;
+                                                       }
+                                                       if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
+                                                               html_stats = p3d.analyse_queue[file.id].html_stats;
+                                                               stats_style = 'visibility:visible;';
+                                                       }
+                                                       if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
+                                                               html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
+                                                       }
+                                                       if (typeof(p3d.analyse_queue[file.id].status_stage)!='undefined' && p3d.analyse_queue[file.id].status_stage) {
+                                                               status_stage = p3d.analyse_queue[file.id].status_stage;
+                                                       }
+                                               }
+                                               if (typeof status_stage !== 'string' || !status_stage.length) {
+                                                       status_stage = 'upload';
+                                               }
+                                               var html_media = '<div class="motqn-card__media">';
+
+                                               if (html_thumb.length) {
+                                                       html_media += html_thumb;
+                                               }
+                                               else {
+                                                       html_media += '<span class="motqn-card__placeholder">' + placeholder_label + '</span>';
+                                               }
+
+                                               html_media += '<div class="motqn-card__status" data-stage="' + status_stage + '">' + html_status + '</div>';
+                                               html_media += '</div>';
+                                               fileList.append(
+                                                       '<li class="p3d-filelist-item" id="' + file.id + '">' +
+                                                               '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_media+'</span></div>' +
+                                                               '<div class="plupload_file_price">' + html_price + '</div>' +
+                                                               '<div class="plupload_file_qty">' + '<input name="'+file.id+'_qty" type="number" min="1" step="1" value="1" onchange=p3dSelectQTYBulk(this)>' + '</div>' +
+                                                               '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
+                                                               '<div class="plupload_file_status">' + html_status + '</div>' +
 								'<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
 								'<div class="plupload_clearer">&nbsp;</div>' +
 								attributes +
@@ -1088,8 +1308,10 @@ used as it is.
 									html_stats+
 									'</div>'+
 								'</div>'+
-							'</div>'
-						);
+                                                       '</div>'
+                                               );
+
+                                               motqnAttachStatusObserver(fileList.children('li#' + file.id));
 
 						window.wp.event_manager.doAction( '3dprint.fileList_appended');
 
