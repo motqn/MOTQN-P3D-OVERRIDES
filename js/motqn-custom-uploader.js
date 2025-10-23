@@ -178,9 +178,48 @@ used as it is.
 
 				uploader = new plupload.Uploader(settings);
 
-				uploaders[id] = uploader;
+                                uploaders[id] = uploader;
 
-				function handleStatus(file) {
+                                var resizeNamespace = '.motqnSummary-' + id;
+
+                                function refreshSummaryStickiness() {
+                                        var summary = $('.motqn-summary', target);
+                                        var mainColumn = $('.motqn-uploader__main', target);
+
+                                        if (!summary.length || !mainColumn.length) {
+                                                return;
+                                        }
+
+                                        var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+                                        var desktopMatches = typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 641px)').matches : $(window).width() >= 641;
+                                        var topOffset = 24;
+                                        var buffer = 24;
+                                        var shouldStick = desktopMatches && mainColumn.outerHeight(true) > Math.max(viewportHeight - (topOffset + buffer), 0);
+
+                                        if (shouldStick) {
+                                                summary.addClass('motqn-summary--sticky');
+                                        } else {
+                                                summary.removeClass('motqn-summary--sticky');
+                                        }
+                                }
+
+                                $(window)
+                                        .off('resize' + resizeNamespace)
+                                        .on('resize' + resizeNamespace, function() {
+                                                if (window.requestAnimationFrame) {
+                                                        window.requestAnimationFrame(refreshSummaryStickiness);
+                                                } else {
+                                                        refreshSummaryStickiness();
+                                                }
+                                        });
+
+                                if (window.requestAnimationFrame) {
+                                        window.requestAnimationFrame(refreshSummaryStickiness);
+                                } else {
+                                        refreshSummaryStickiness();
+                                }
+
+                                function handleStatus(file) {
 					var actionClass;
 
 					if (file.status == plupload.DONE) {
@@ -519,9 +558,15 @@ used as it is.
                                         $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
                                         if (dropzone.length) {
                                                 dropzone.toggleClass('motqn-uploader__dropzone--has-files', uploader.files.length > 0);
+
+                                                if (window.requestAnimationFrame) {
+                                                        window.requestAnimationFrame(refreshSummaryStickiness);
+                                                } else {
+                                                        refreshSummaryStickiness();
+                                                }
                                         }
 
-					if (uploader.total.queued === 0) {
+                                        if (uploader.total.queued === 0) {
 						$('span.plupload_add_text', target).html(_('Add Files'));
 					} else {
 						$('span.plupload_add_text', target).html(o.sprintf(_('%d files queued'), uploader.total.queued));
@@ -544,11 +589,12 @@ used as it is.
 //					console.log(analyse_queue);
 				}
 
-				function destroy() {
-					delete uploaders[id];
-					uploader.destroy();
-					target.html(contents_bak);
-					uploader = target = contents_bak = null;
+                                function destroy() {
+                                        $(window).off('resize' + resizeNamespace);
+                                        delete uploaders[id];
+                                        uploader.destroy();
+                                        target.html(contents_bak);
+                                        uploader = target = contents_bak = null;
 				}
 
 				uploader.bind("UploadFile", function(up, file) {
@@ -894,9 +940,48 @@ used as it is.
 
 				uploader = new plupload.Uploader(settings);
 
-				uploaders[id] = uploader;
+                                uploaders[id] = uploader;
 
-				function handleStatus(file) {
+                                var resizeNamespace = '.motqnSummary-' + id;
+
+                                function refreshSummaryStickiness() {
+                                        var summary = $('.motqn-summary', target);
+                                        var mainColumn = $('.motqn-uploader__main', target);
+
+                                        if (!summary.length || !mainColumn.length) {
+                                                return;
+                                        }
+
+                                        var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+                                        var desktopMatches = typeof window.matchMedia === 'function' ? window.matchMedia('(min-width: 641px)').matches : $(window).width() >= 641;
+                                        var topOffset = 24;
+                                        var buffer = 24;
+                                        var shouldStick = desktopMatches && mainColumn.outerHeight(true) > Math.max(viewportHeight - (topOffset + buffer), 0);
+
+                                        if (shouldStick) {
+                                                summary.addClass('motqn-summary--sticky');
+                                        } else {
+                                                summary.removeClass('motqn-summary--sticky');
+                                        }
+                                }
+
+                                $(window)
+                                        .off('resize' + resizeNamespace)
+                                        .on('resize' + resizeNamespace, function() {
+                                                if (window.requestAnimationFrame) {
+                                                        window.requestAnimationFrame(refreshSummaryStickiness);
+                                                } else {
+                                                        refreshSummaryStickiness();
+                                                }
+                                        });
+
+                                if (window.requestAnimationFrame) {
+                                        window.requestAnimationFrame(refreshSummaryStickiness);
+                                } else {
+                                        refreshSummaryStickiness();
+                                }
+
+                                function handleStatus(file) {
 					var actionClass;
 
 					if (file.status == plupload.DONE) {
@@ -1235,9 +1320,15 @@ used as it is.
                                     $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
                                     if (dropzone.length) {
                                             dropzone.toggleClass('motqn-uploader__dropzone--has-files', uploader.files.length > 0);
+
+                                            if (window.requestAnimationFrame) {
+                                                    window.requestAnimationFrame(refreshSummaryStickiness);
+                                            } else {
+                                                    refreshSummaryStickiness();
+                                            }
                                     }
 
-					if (uploader.total.queued === 0) {
+                                        if (uploader.total.queued === 0) {
 						$('span.plupload_add_text', target).html(_('Add Files'));
 					} else {
 						$('span.plupload_add_text', target).html(o.sprintf(_('%d files queued'), uploader.total.queued));
@@ -1260,11 +1351,12 @@ used as it is.
 //					console.log(analyse_queue);
 				}
 
-				function destroy() {
-					delete uploaders[id];
-					uploader.destroy();
-					target.html(contents_bak);
-					uploader = target = contents_bak = null;
+                                function destroy() {
+                                        $(window).off('resize' + resizeNamespace);
+                                        delete uploaders[id];
+                                        uploader.destroy();
+                                        target.html(contents_bak);
+                                        uploader = target = contents_bak = null;
 				}
 
 				uploader.bind("UploadFile", function(up, file) {

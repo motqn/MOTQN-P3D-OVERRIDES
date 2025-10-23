@@ -311,6 +311,9 @@
     justify-content: center;
     margin-left: auto;
     align-self: flex-start;
+}
+
+.motqn-summary--sticky {
     position: sticky;
     top: 24px;
 }
@@ -443,5 +446,10 @@
         align-self: stretch;
         margin-left: 0;
         width: 100%;
+    }
+
+    .motqn-summary--sticky {
+        position: static;
+        top: auto;
     }
 }
