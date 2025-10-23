@@ -137,7 +137,7 @@ used as it is.
                                                                         '</div>' +
                                                                 '</dl>' +
                                                                 '<div class="motqn-summary__actions">' +
-                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Add to Cart') + '</button>' +
                                                                         '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
                                                                 '</div>' +
                                                         '</div>' +
@@ -529,8 +529,10 @@ used as it is.
 
 					$('a.plupload_start', target).toggleClass('plupload_disabled', uploader.files.length == (uploader.total.uploaded + uploader.total.failed));
 
-					// Scroll to end of file list
-					fileList[0].scrollTop = fileList[0].scrollHeight;
+                                        // Scroll to end of file list
+                                        if (fileList.length) {
+                                            fileList[0].scrollTop = fileList[0].scrollHeight;
+                                        }
 
 					updateTotalProgress();
 
@@ -853,7 +855,7 @@ used as it is.
                                                                         '</div>' +
                                                                 '</dl>' +
                                                                 '<div class="motqn-summary__actions">' +
-                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Add to Cart') + '</button>' +
                                                                         '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
                                                                 '</div>' +
                                                         '</div>' +
@@ -1245,8 +1247,10 @@ used as it is.
 
 					$('a.plupload_start', target).toggleClass('plupload_disabled', uploader.files.length == (uploader.total.uploaded + uploader.total.failed));
 
-					// Scroll to end of file list
-					fileList[0].scrollTop = fileList[0].scrollHeight;
+                                        // Scroll to end of file list
+                                        if (fileList.length) {
+                                            fileList[0].scrollTop = fileList[0].scrollHeight;
+                                        }
 
 					updateTotalProgress();
 
@@ -1498,27 +1502,41 @@ used as it is.
                 return;
             }
 
-            var $fileList = $dropzone.find('.motqn-card-list');
+            var $fileList = $uploader.find('.motqn-card-list').first();
             var $workspace = $main.find('.motqn-uploader__workspace');
 
             if (!$workspace.length) {
                 $workspace = $('<div class="motqn-uploader__workspace"></div>');
-                var $dropWrapper = $('<div class="motqn-uploader__dropzone-wrapper"></div>').append($dropzone);
+                var $dropWrapper = $('<div class="motqn-uploader__dropzone-wrapper"></div>');
                 var $queue = $('<div class="motqn-uploader__queue"></div>');
+
+                $workspace.append($dropWrapper).append($queue);
+
+                if ($dropzone.parent().length) {
+                    $dropzone.replaceWith($workspace);
+                } else {
+                    $main.prepend($workspace);
+                }
+
+                $dropWrapper.append($dropzone);
+
                 if ($fileList.length) {
                     $queue.append($fileList);
                 }
-                $workspace.append($dropWrapper).append($queue);
-                $dropzone.after($workspace);
             } else {
-                if (!$dropzone.parent().hasClass('motqn-uploader__dropzone-wrapper')) {
-                    $dropzone.wrap('<div class="motqn-uploader__dropzone-wrapper"></div>');
+                var $dropWrapperExisting = $workspace.find('.motqn-uploader__dropzone-wrapper');
+                if (!$dropWrapperExisting.length) {
+                    $dropWrapperExisting = $('<div class="motqn-uploader__dropzone-wrapper"></div>').prependTo($workspace);
                 }
-                if ($fileList.length) {
-                    var $queueExisting = $workspace.find('.motqn-uploader__queue');
-                    if (!$queueExisting.length) {
-                        $queueExisting = $('<div class="motqn-uploader__queue"></div>').appendTo($workspace);
-                    }
+                if (!$dropWrapperExisting.is($dropzone.parent())) {
+                    $dropWrapperExisting.prepend($dropzone);
+                }
+
+                var $queueExisting = $workspace.find('.motqn-uploader__queue');
+                if (!$queueExisting.length) {
+                    $queueExisting = $('<div class="motqn-uploader__queue"></div>').appendTo($workspace);
+                }
+                if ($fileList.length && !$queueExisting.is($fileList.parent())) {
                     $queueExisting.append($fileList);
                 }
             }
@@ -1602,10 +1620,21 @@ used as it is.
                 $media = $('<div class="motqn-file-card__media"></div>');
                 $header.after($media);
             }
-            var $preview = $media.children('.motqn-file-card__preview');
-            if (!$preview.length) {
-                $preview = $('<div class="motqn-file-card__preview"></div>').appendTo($media);
+
+            var $visual = $media.children('.motqn-file-card__visual');
+            if (!$visual.length) {
+                $visual = $('<div class="motqn-file-card__visual"></div>');
+                $media.prepend($visual);
             }
+
+            var $preview = $media.find('> .motqn-file-card__preview');
+            if ($preview.length && !$preview.parent().hasClass('motqn-file-card__visual')) {
+                $preview.appendTo($visual);
+            }
+            if (!$preview.length) {
+                $preview = $('<div class="motqn-file-card__preview"></div>').appendTo($visual);
+            }
+
             if ($imageWrapper && $imageWrapper.length && $imageWrapper.html().trim().length) {
                 $preview.empty().append($imageWrapper);
             } else if (!$preview.children().length) {
@@ -1623,12 +1652,17 @@ used as it is.
                 $stats.html('<p class="motqn-file-card__stats-placeholder">' + this.translate('Model details will appear here after analysis.') + '</p>');
             }
 
-            var $progress = $container.children('.motqn-file-card__status');
+            $container.children('.motqn-file-card__status').remove();
+            var $progress = $visual.children('.motqn-file-card__status');
             if (!$progress.length) {
-                $progress = $('<div class="motqn-file-card__status"></div>');
-                $container.append($progress);
+                $progress = $('<div class="motqn-file-card__status"></div>').appendTo($visual);
             }
-            $progress.append($status).append($size);
+            if ($status.length) {
+                $progress.append($status);
+            }
+            if ($size.length) {
+                $progress.append($size);
+            }
 
             $container.find('.plupload_clearer').remove();
 
