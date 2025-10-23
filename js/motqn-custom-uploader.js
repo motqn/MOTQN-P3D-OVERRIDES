@@ -116,7 +116,7 @@ used as it is.
                                                                 '</div>' +
                                                         '</div>' +
                                                 '</section>' +
-                                                '<section class="motqn-uploader__files-section" aria-label="' + _('Files in queue') + '">' +
+                                                '<section class="motqn-uploader__files-section motqn-uploader__files-section--empty" aria-label="' + _('Files in queue') + '">' +
                                                         '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
                                                 '</section>' +
                                         '</div>' +
@@ -217,7 +217,8 @@ used as it is.
 
                                 function updateList() {
                                         var fileList = $('ul.plupload_filelist', target).html(''), inputCount = 0, inputHTML,
-                                                dropzone = $('#' + id + '_dropzone', target);
+                                                dropzone = $('#' + id + '_dropzone', target),
+                                                filesSection = $('.motqn-uploader__files-section', target);
 
 					var update_html = true;
 					$.each(uploader.files, function(i, file) {
@@ -520,6 +521,10 @@ used as it is.
                                         $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
                                         if (dropzone.length) {
                                                 dropzone.toggleClass('motqn-uploader__dropzone--has-files', uploader.files.length > 0);
+                                        }
+
+                                        if (filesSection.length) {
+                                                filesSection.toggleClass('motqn-uploader__files-section--empty', uploader.files.length === 0);
                                         }
 
 					if (uploader.total.queued === 0) {
