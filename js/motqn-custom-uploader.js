@@ -1679,9 +1679,14 @@ used as it is.
             }
 
             $container.children('.motqn-file-card__status').remove();
-            var $statusArea = $media.children('.motqn-file-card__status');
+            var $statusArea = $visual.children('.motqn-file-card__status');
             if (!$statusArea.length) {
-                $statusArea = $('<div class="motqn-file-card__status"></div>').appendTo($media);
+                $statusArea = $media.children('.motqn-file-card__status');
+                if ($statusArea.length) {
+                    $statusArea.appendTo($visual);
+                } else {
+                    $statusArea = $('<div class="motqn-file-card__status"></div>').appendTo($visual);
+                }
             }
 
             var $statusMessage = $statusArea.children('.motqn-status-message');
@@ -1773,6 +1778,34 @@ used as it is.
 
             if (stage) {
                 $statusArea.attr('data-motqn-stage', stage);
+            }
+
+            if (stage === 'analyse') {
+                this.scheduleAutoAnalysisForCard($card);
+            }
+        },
+
+        scheduleAutoAnalysisForCard: function($card) {
+            if (!$card || !window.p3d || !p3d.analyse_queue || typeof window.p3dScheduleAutoAnalysis !== 'function') {
+                return;
+            }
+
+            var id = $card.attr('id');
+            if (!id || !p3d.analyse_queue[id]) {
+                return;
+            }
+
+            var file = p3d.analyse_queue[id];
+            if (!file) {
+                return;
+            }
+
+            var analyseStatus = typeof file.analyse_status === 'undefined' ? 0 : parseInt(file.analyse_status, 10);
+            var repairStatus = typeof file.repair_status === 'undefined' ? 1 : parseInt(file.repair_status, 10);
+            var isUploaded = !!file.uploaded || $card.hasClass('plupload_done');
+
+            if (analyseStatus === 0 && repairStatus !== -1 && !file.fatal_error && isUploaded) {
+                window.p3dScheduleAutoAnalysis(200);
             }
         },
 

@@ -662,6 +662,7 @@
     color: #64748b;
     align-items: center;
     text-align: center;
+    width: 100%;
 }
 
 .motqn-status-steps {
