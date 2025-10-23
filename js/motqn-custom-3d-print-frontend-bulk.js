@@ -327,19 +327,24 @@ jQuery(function() {
 							}
 						}
 
-						var loader = new THREE3DP.FontLoader();
-						loader.load( p3d.plugin_url+'includes/ext/fonts/helvetiker_bold.typeface.json', function ( response ) {
-							p3d.font = response;
-//ThreeDxf.Viewer(dxf, document.getElementById('p3d-viewer'), jQuery('#p3d-cv').width(), jQuery('#p3d-cv').height(), p3d.font);
-							var cvs = new ThreeDxf.Viewer(dxf, document.body, 100, 100, p3d.font);
-							p3d.analyse_queue[file_id].bb = p3d.boundingBox;
-							p3d.analyse_queue[file_id].dim_x=((p3d.analyse_queue[file_id].bb.max.x-p3d.analyse_queue[file_id].bb.min.x)/10).toFixed(2);
-							p3d.analyse_queue[file_id].dim_y=((p3d.analyse_queue[file_id].bb.max.y-p3d.analyse_queue[file_id].bb.min.y)/10).toFixed(2);
-							p3d.analyse_queue[file_id].dim_z=((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2);
-//							console.log(jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))
+						var threeNamespace = window.THREE3DP || window.THREE;
 
+						if (threeNamespace && typeof threeNamespace.FontLoader === 'function') {
+							var loader = new threeNamespace.FontLoader();
+							loader.load( p3d.plugin_url+'includes/ext/fonts/helvetiker_bold.typeface.json', function ( response ) {
+								p3d.font = response;
+								//ThreeDxf.Viewer(dxf, document.getElementById('p3d-viewer'), jQuery('#p3d-cv').width(), jQuery('#p3d-cv').height(), p3d.font);
+								var cvs = new ThreeDxf.Viewer(dxf, document.body, 100, 100, p3d.font);
+								p3d.analyse_queue[file_id].bb = p3d.boundingBox;
+								p3d.analyse_queue[file_id].dim_x=((p3d.analyse_queue[file_id].bb.max.x-p3d.analyse_queue[file_id].bb.min.x)/10).toFixed(2);
+								p3d.analyse_queue[file_id].dim_y=((p3d.analyse_queue[file_id].bb.max.y-p3d.analyse_queue[file_id].bb.min.y)/10).toFixed(2);
+								p3d.analyse_queue[file_id].dim_z=((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2);
+								//							console.log(jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))
 
-						})
+							});
+						} else {
+							console.warn('Three.js FontLoader is unavailable; skipping DXF dimension extraction.');
+						}
 					},
 					fail : function() {
 						alert(p3d.text_file_does_not_exist);
