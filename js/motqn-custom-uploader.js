@@ -81,67 +81,73 @@ used as it is.
 		return plupload.translate(str) || str;
 	}
 
-	function renderUI(id, target) {
-		// Remove all existing non plupload items
-		target.contents().each(function(i, node) {
-			node = $(node);
+        function renderUI(id, target) {
+                // Remove all existing non plupload items
+                target.contents().each(function(i, node) {
+                        node = $(node);
 
-			if (!node.is('.plupload')) {
-				node.remove();
-			}
-		});
-		//var current_qty = jQuery('#o_'+id).find()
+                        if (!node.is('.plupload')) {
+                                node.remove();
+                        }
+                });
 
-		target.prepend(
-			'<div class="plupload_wrapper plupload_scroll">' +
-				'<div id="' + id + '_container" class="plupload_container">' +
-					'<div class="plupload">' +
-						'<div class="plupload_header">' +
-							'<div class="plupload_header_content">' +
-								'<div class="plupload_header_title">' + _('Select files') + '</div>' +
-								'<div class="plupload_header_text">' + p3d.text_bulk_plupload_header_text + '</div>' +
-							'</div>' +
-						'</div>' +
-
-						'<div class="plupload_content">' +
-							'<div class="plupload_filelist_header">' +
-								'<div class="plupload_file_name">' + _('Filename') + '</div>' +
-								'<div class="plupload_file_price">' + p3d.text_bulk_unit_price + '</div>' +
-								'<div class="plupload_file_qty">' + p3d.text_bulk_qty + '</div>' +
-								'<div class="plupload_file_action">'+_('#')+'</div>' +
-								'<div class="plupload_file_status"><span>' + _('Status') + '</span></div>' +
-								'<div class="plupload_file_size">' + _('Size') + '</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-							'</div>' +
-
-							'<ul id="' + id + '_filelist" class="plupload_filelist"></ul>' +
-
-							'<div class="plupload_filelist_footer">' +
-								'<div class="plupload_file_name">' +
-									'<div class="plupload_buttons">' +
-										'<a href="#" class="plupload_button plupload_add" id="' + id + '_browse">' + _('Add Files') + '</a>' +
-										'<a href="#" style="display:none;" class="plupload_button plupload_start">' + _('Start Upload') + '</a>' +
-									'</div>' +
-									'<span class="plupload_upload_status"></span>' +
-								'</div>' +
-								'<div class="plupload_file_action"></div>' +
-								'<div class="plupload_file_price"><span class="plupload_total_price">&nbsp;</span></div>' +
-								'<div class="plupload_file_status"><span class="plupload_total_status">0%</span></div>' +
-								'<div class="plupload_file_size"><span class="plupload_total_file_size">0 b</span></div>' +
-								'<div class="plupload_progress">' +
-									'<div class="plupload_progress_container">' +
-										'<div class="plupload_progress_bar"></div>' +
-									'</div>' +
-								'</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-							'</div>' +
-						'</div>' +
-					'</div>' +
-				'</div>' +
-				'<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
-			'</div>'
-		);
-	}
+                target.prepend(
+                        '<div class="plupload_wrapper plupload_scroll motqn-uploader">' +
+                                '<div id="' + id + '_container" class="plupload_container">' +
+                                        '<div class="plupload motqn-uploader__grid">' +
+                                                '<div class="motqn-uploader__main">' +
+                                                        '<div class="motqn-uploader__header">' +
+                                                                '<div class="motqn-uploader__intro">' +
+                                                                        '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
+                                                                        '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
+                                                                '</div>' +
+                                                                '<div class="motqn-uploader__buttons">' +
+                                                                        '<div class="plupload_buttons">' +
+                                                                                '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
+                                                                                '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
+                                                                        '</div>' +
+                                                                        '<span class="plupload_upload_status"></span>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                        '<div class="plupload_progress motqn-progress">' +
+                                                                '<div class="plupload_progress_container">' +
+                                                                        '<div class="plupload_progress_bar"></div>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                        '<div class="motqn-uploader__dropzone" id="' + id + '_dropzone">' +
+                                                                '<div class="motqn-uploader__dropzone-message">' + _('Drag & drop files here or use the button above.') + '</div>' +
+                                                                '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
+                                                        '</div>' +
+                                                '</div>' +
+                                                '<aside class="motqn-summary">' +
+                                                        '<div class="motqn-summary__card">' +
+                                                                '<h3 class="motqn-summary__title">' + _('Charge Details') + '</h3>' +
+                                                                '<dl class="motqn-summary__list">' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Total Price') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_price">&nbsp;</span></dd>' +
+                                                                        '</div>' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Upload Progress') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_status">0%</span></dd>' +
+                                                                        '</div>' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Total Size') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_file_size">0 b</span></dd>' +
+                                                                        '</div>' +
+                                                                '</dl>' +
+                                                                '<div class="motqn-summary__actions">' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                '</aside>' +
+                                        '</div>' +
+                                '</div>' +
+                                '<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
+                        '</div>'
+                );
+        }
 
 	$.fn.pluploadQueue = function(settings) {
 		if (settings) {
@@ -166,9 +172,9 @@ used as it is.
 				}, settings);
 
 				// Enable drag/drop (see PostInit handler as well)
-				if (settings.dragdrop) {
-					settings.drop_element = id + '_filelist';
-				}
+                                if (settings.dragdrop) {
+                                        settings.drop_element = id + '_dropzone';
+                                }
 
 				uploader = new plupload.Uploader(settings);
 
@@ -208,8 +214,9 @@ used as it is.
 					);
 				}
 
-				function updateList() {
-					var fileList = $('ul.plupload_filelist', target).html(''), inputCount = 0, inputHTML;
+                                function updateList() {
+                                        var fileList = $('ul.plupload_filelist', target).html(''), inputCount = 0, inputHTML,
+                                                dropzone = $('#' + id + '_dropzone', target);
 
 					var update_html = true;
 					$.each(uploader.files, function(i, file) {
@@ -509,7 +516,10 @@ used as it is.
 						});
 					});
 
-					$('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
+                                        $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
+                                        if (dropzone.length) {
+                                                dropzone.toggleClass('motqn-uploader__dropzone--has-files', uploader.files.length > 0);
+                                        }
 
 					if (uploader.total.queued === 0) {
 						$('span.plupload_add_text', target).html(_('Add Files'));
@@ -787,67 +797,73 @@ used as it is.
 		return plupload.translate(str) || str;
 	}
 
-	function renderUI(id, target) {
-		// Remove all existing non plupload items
-		target.contents().each(function(i, node) {
-			node = $(node);
+        function renderUI(id, target) {
+                // Remove all existing non plupload items
+                target.contents().each(function(i, node) {
+                        node = $(node);
 
-			if (!node.is('.plupload')) {
-				node.remove();
-			}
-		});
-		//var current_qty = jQuery('#o_'+id).find()
+                        if (!node.is('.plupload')) {
+                                node.remove();
+                        }
+                });
 
-		target.prepend(
-			'<div class="plupload_wrapper plupload_scroll">' +
-				'<div id="' + id + '_container" class="plupload_container">' +
-					'<div class="plupload">' +
-						'<div class="plupload_header">' +
-							'<div class="plupload_header_content">' +
-								'<div class="plupload_header_title">' + _('Select files') + '</div>' +
-								'<div class="plupload_header_text">' + p3d.text_bulk_plupload_header_text + '</div>' +
-							'</div>' +
-						'</div>' +
-
-						'<div class="plupload_content">' +
-							'<div class="plupload_filelist_header">' +
-								'<div class="plupload_file_name">' + _('Filename') + '</div>' +
-								'<div class="plupload_file_price">' + p3d.text_bulk_unit_price + '</div>' +
-								'<div class="plupload_file_qty">' + p3d.text_bulk_qty + '</div>' +
-								'<div class="plupload_file_action">'+_('#')+'</div>' +
-								'<div class="plupload_file_status"><span>' + _('Status') + '</span></div>' +
-								'<div class="plupload_file_size">' + _('Size') + '</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-							'</div>' +
-
-							'<ul id="' + id + '_filelist" class="plupload_filelist"></ul>' +
-
-							'<div class="plupload_filelist_footer">' +
-								'<div class="plupload_file_name">' +
-									'<div class="plupload_buttons">' +
-										'<a href="#" class="plupload_button plupload_add" id="' + id + '_browse">' + _('Add Files') + '</a>' +
-										'<a href="#" style="display:none;" class="plupload_button plupload_start">' + _('Start Upload') + '</a>' +
-									'</div>' +
-									'<span class="plupload_upload_status"></span>' +
-								'</div>' +
-								'<div class="plupload_file_action"></div>' +
-								'<div class="plupload_file_price"><span class="plupload_total_price">&nbsp;</span></div>' +
-								'<div class="plupload_file_status"><span class="plupload_total_status">0%</span></div>' +
-								'<div class="plupload_file_size"><span class="plupload_total_file_size">0 b</span></div>' +
-								'<div class="plupload_progress">' +
-									'<div class="plupload_progress_container">' +
-										'<div class="plupload_progress_bar"></div>' +
-									'</div>' +
-								'</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-							'</div>' +
-						'</div>' +
-					'</div>' +
-				'</div>' +
-				'<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
-			'</div>'
-		);
-	}
+                target.prepend(
+                        '<div class="plupload_wrapper plupload_scroll motqn-uploader">' +
+                                '<div id="' + id + '_container" class="plupload_container">' +
+                                        '<div class="plupload motqn-uploader__grid">' +
+                                                '<div class="motqn-uploader__main">' +
+                                                        '<div class="motqn-uploader__header">' +
+                                                                '<div class="motqn-uploader__intro">' +
+                                                                        '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
+                                                                        '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
+                                                                '</div>' +
+                                                                '<div class="motqn-uploader__buttons">' +
+                                                                        '<div class="plupload_buttons">' +
+                                                                                '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
+                                                                                '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
+                                                                        '</div>' +
+                                                                        '<span class="plupload_upload_status"></span>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                        '<div class="plupload_progress motqn-progress">' +
+                                                                '<div class="plupload_progress_container">' +
+                                                                        '<div class="plupload_progress_bar"></div>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                        '<div class="motqn-uploader__dropzone" id="' + id + '_dropzone">' +
+                                                                '<div class="motqn-uploader__dropzone-message">' + _('Drag & drop files here or use the button above.') + '</div>' +
+                                                                '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
+                                                        '</div>' +
+                                                '</div>' +
+                                                '<aside class="motqn-summary">' +
+                                                        '<div class="motqn-summary__card">' +
+                                                                '<h3 class="motqn-summary__title">' + _('Charge Details') + '</h3>' +
+                                                                '<dl class="motqn-summary__list">' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Total Price') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_price">&nbsp;</span></dd>' +
+                                                                        '</div>' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Upload Progress') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_status">0%</span></dd>' +
+                                                                        '</div>' +
+                                                                        '<div class="motqn-summary__item">' +
+                                                                                '<dt>' + _('Total Size') + '</dt>' +
+                                                                                '<dd><span class="plupload_total_file_size">0 b</span></dd>' +
+                                                                        '</div>' +
+                                                                '</dl>' +
+                                                                '<div class="motqn-summary__actions">' +
+                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
+                                                                        '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
+                                                                '</div>' +
+                                                        '</div>' +
+                                                '</aside>' +
+                                        '</div>' +
+                                '</div>' +
+                                '<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
+                        '</div>'
+                );
+        }
 
 	$.fn.pluploadQueue = function(settings) {
 		if (settings) {
@@ -872,9 +888,9 @@ used as it is.
 				}, settings);
 
 				// Enable drag/drop (see PostInit handler as well)
-				if (settings.dragdrop) {
-					settings.drop_element = id + '_filelist';
-				}
+                                if (settings.dragdrop) {
+                                        settings.drop_element = id + '_dropzone';
+                                }
 
 				uploader = new plupload.Uploader(settings);
 
@@ -914,8 +930,9 @@ used as it is.
 					);
 				}
 
-				function updateList() {
-					var fileList = $('ul.plupload_filelist', target).html(''), inputCount = 0, inputHTML;
+                            function updateList() {
+                                    var fileList = $('ul.plupload_filelist', target).html(''), inputCount = 0, inputHTML,
+                                            dropzone = $('#' + id + '_dropzone', target);
 
 					var update_html = true;
 					$.each(uploader.files, function(i, file) {
@@ -1215,7 +1232,10 @@ used as it is.
 						});
 					});
 
-					$('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
+                                    $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
+                                    if (dropzone.length) {
+                                            dropzone.toggleClass('motqn-uploader__dropzone--has-files', uploader.files.length > 0);
+                                    }
 
 					if (uploader.total.queued === 0) {
 						$('span.plupload_add_text', target).html(_('Add Files'));
