@@ -15,6 +15,24 @@ p3d.image_map=1;
 // --- MOTQN custom automation helpers ----------------------------------------------------
 p3d.auto_analysis_timer = null;
 
+function p3dDebugLog(message, context) {
+        var shouldLog = true;
+
+        if (typeof p3d !== 'undefined' && typeof p3d.debug_logging !== 'undefined') {
+                shouldLog = !!p3d.debug_logging;
+        }
+
+        if (!shouldLog || typeof console === 'undefined' || typeof console.log !== 'function') {
+                return;
+        }
+
+        if (typeof context !== 'undefined') {
+                console.log('[P3D]', message, context);
+        } else {
+                console.log('[P3D]', message);
+        }
+}
+
 function p3dScheduleAutoAnalysis(delay) {
         if (typeof p3d === 'undefined') {
                 return;
@@ -24,11 +42,16 @@ function p3dScheduleAutoAnalysis(delay) {
                 delay = 300;
         }
 
+        var hadExistingTimer = !!p3d.auto_analysis_timer;
         if (p3d.auto_analysis_timer) {
                 clearTimeout(p3d.auto_analysis_timer);
         }
 
         p3d.auto_analysis_timer = setTimeout(p3dMaybeStartAutoAnalysis, delay);
+        p3dDebugLog('Auto-analysis timer scheduled.', {
+                delay: delay,
+                replacedExistingTimer: hadExistingTimer
+        });
 }
 
 function p3dHasPendingAutoAnalysis() {
@@ -37,6 +60,17 @@ function p3dHasPendingAutoAnalysis() {
         }
 
         var hasPending = false;
+        var queueLength = 0;
+
+        try {
+                queueLength = Object.keys(p3d.analyse_queue).length;
+        } catch (e) {
+                queueLength = 0;
+        }
+
+        p3dDebugLog('Checking auto-analysis queue for pending items.', {
+                queueSize: queueLength
+        });
 
         jQuery.each(p3d.analyse_queue, function(fileId, file) {
                 if (!file || file.fatal_error) {
@@ -82,6 +116,10 @@ function p3dHasPendingAutoAnalysis() {
                 }
         });
 
+        p3dDebugLog('Pending auto-analysis status evaluated.', {
+                hasPending: hasPending
+        });
+
         return hasPending;
 }
 
@@ -92,22 +130,37 @@ function p3dMaybeStartAutoAnalysis() {
 
         p3d.auto_analysis_timer = null;
 
+        p3dDebugLog('Evaluating auto-analysis trigger.', {
+                repairing: !!p3d.repairing,
+                analysing: !!p3d.analysing,
+                hasInterval: !!p3d.analyse_ajax_interval_bulk
+        });
+
         if (typeof p3dAnalyseModelsBulk !== 'function') {
+                p3dDebugLog('Auto-analysis aborted because p3dAnalyseModelsBulk is unavailable.');
                 return;
         }
 
         if (p3d.repairing || p3d.analysing) {
+                p3dDebugLog('Delaying auto-analysis; repair or analysis in progress.', {
+                        repairing: !!p3d.repairing,
+                        analysing: !!p3d.analysing
+                });
                 p3dScheduleAutoAnalysis(500);
                 return;
         }
 
         if (p3d.analyse_ajax_interval_bulk) {
+                p3dDebugLog('Auto-analysis already running; skipping new interval.');
                 return;
         }
 
         if (p3dHasPendingAutoAnalysis()) {
                 p3d.analyse_requested = true;
+                p3dDebugLog('Pending items detected; starting auto-analysis.');
                 p3dAnalyseModelsBulk();
+        } else {
+                p3dDebugLog('No pending items detected; auto-analysis not started.');
         }
 }
 
@@ -1118,23 +1171,39 @@ function p3dAnalyseModelBulk(file_id) {
 }
 
 function p3dAnalyseModelsBulk() {
-	jQuery('#p3d-calculate-price-button').hide();
+        jQuery('#p3d-calculate-price-button').hide();
 
-	p3d.analyse_ajax_interval_bulk = setInterval(function(){
-		jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
-			var status = 0;
-			var file_id = value.id;
-			if (typeof(value.analyse_status)!='undefined') {
+        var queueLength = 0;
+        try {
+                queueLength = Object.keys(p3d.analyse_queue).length;
+        } catch (e) {
+                queueLength = 0;
+        }
 
-				if (value.analyse_status==0 && value.uploaded) {
-					status = value.status;
-					obj = document.getElementById(file_id);
-					p3d.analyse_requested = true;
-					p3dAnalyseModelAJAXBulk (obj, status);
-					return false; //break
-				}
-				else {
-					p3d.analyse_requested = false;
+        p3dDebugLog('Starting auto-analysis interval.', {
+                queueSize: queueLength,
+                hadExistingInterval: !!p3d.analyse_ajax_interval_bulk
+        });
+
+        p3d.analyse_ajax_interval_bulk = setInterval(function(){
+                jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+                        var status = 0;
+                        var file_id = value.id;
+                        if (typeof(value.analyse_status)!='undefined') {
+
+                                if (value.analyse_status==0 && value.uploaded) {
+                                        status = value.status;
+                                        obj = document.getElementById(file_id);
+                                        p3d.analyse_requested = true;
+                                        p3dDebugLog('Auto-analysis interval processing file.', {
+                                                fileId: file_id,
+                                                status: status
+                                        });
+                                        p3dAnalyseModelAJAXBulk (obj, status);
+                                        return false; //break
+                                }
+                                else {
+                                        p3d.analyse_requested = false;
 					return; //continue
 				}
 			}
@@ -1159,38 +1228,81 @@ function p3dAnalyseModelsBulk() {
                 if (p3d.all_finished) {
                         clearInterval(p3d.analyse_ajax_interval_bulk);
                         p3d.analyse_ajax_interval_bulk = null;
+                        p3dDebugLog('Auto-analysis interval completed; all files finished.');
                 }
 
                 p3dCheckAllFinished();
 
-	}, 1000);
+                p3dDebugLog('Auto-analysis interval tick completed.', {
+                        allFinished: p3d.all_finished
+                });
+
+        }, 1000);
 }
 
 function p3dAnalyseModelAJAXBulk (obj, status) {
-	if (typeof(obj)=='undefined') return;
-	if (status!=5) return;
-	if (p3d.analysing) return;
+        if (typeof(obj)=='undefined') {
+                p3dDebugLog('Skipping model analysis; missing DOM element.', {
+                        status: status
+                });
+                return;
+        }
 
-	if (Object.keys(p3d.analyse_queue).length==0) return;
+        var file_id = jQuery(obj).prop('id');
 
-	//todo maybe sort by size
+        if (status!=5) {
+                p3dDebugLog('Skipping model analysis due to unexpected status.', {
+                        fileId: file_id,
+                        status: status
+                });
+                return;
+        }
+        if (p3d.analysing) {
+                p3dDebugLog('Skipping model analysis; another analysis is in progress.', {
+                        fileId: file_id
+                });
+                return;
+        }
+
+        try {
+                if (Object.keys(p3d.analyse_queue).length==0) {
+                        p3dDebugLog('Skipping model analysis; analyse queue is empty.', {
+                                fileId: file_id
+                        });
+                        return;
+                }
+        } catch (e) {
+                p3dDebugLog('Skipping model analysis; analyse queue unavailable.', {
+                        fileId: file_id
+                });
+                return;
+        }
+
+        //todo maybe sort by size
 
 
 
-	var file_id = jQuery(obj).prop('id');
-	var dim_x = dim_y = dim_z = 0;
-	jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 1%');
+        var dim_x = dim_y = dim_z = 0;
+        jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 1%');
 
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr1 && p3d.analyse_queue[file_id].xhr1.readyState != 4) {
-		p3d.analyse_queue[file_id].xhr1.abort();
-		p3d.analysing = false;
-		p3d.analyse_queue[file_id].analyse_status = 0;
-	}
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
-		p3d.analyse_queue[file_id].xhr2.abort();
-		p3d.analysing = false;
-		p3d.analyse_queue[file_id].analyse_status = 0;
-	}
+        if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr1 && p3d.analyse_queue[file_id].xhr1.readyState != 4) {
+                p3d.analyse_queue[file_id].xhr1.abort();
+                p3d.analysing = false;
+                p3d.analyse_queue[file_id].analyse_status = 0;
+                p3dDebugLog('Aborted pending analyse request before starting a new one.', {
+                        fileId: file_id,
+                        xhr: 'xhr1'
+                });
+        }
+        if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
+                p3d.analyse_queue[file_id].xhr2.abort();
+                p3d.analysing = false;
+                p3d.analyse_queue[file_id].analyse_status = 0;
+                p3dDebugLog('Aborted pending analyse request before starting a new one.', {
+                        fileId: file_id,
+                        xhr: 'xhr2'
+                });
+        }
 
 	if (typeof(p3d.analyse_queue[file_id].dim_x)!='undefined') {
 		dim_x = p3d.analyse_queue[file_id].dim_x;
@@ -1237,9 +1349,14 @@ p3d.analyse_queue[file_id].dim_x
 //console.log(custom_attributes);
 //console.log(JSON.stringify(custom_attributes));
 
-	if (p3d.analyse_requested) {
-	p3d.analysing = true;
-	p3d.analyse_queue[file_id].xhr1=jQuery.ajax({
+        if (p3d.analyse_requested) {
+        p3dDebugLog('Sending analyse request.', {
+                fileId: file_id,
+                printerId: printer_id,
+                materialId: material_id
+        });
+        p3d.analysing = true;
+        p3d.analyse_queue[file_id].xhr1=jQuery.ajax({
 		method: "POST",
 		type: "POST",
 		url: p3d.url,
@@ -1267,8 +1384,12 @@ p3d.analyse_queue[file_id].dim_x
 		.done(function( msg ) {
 			var data = jQuery.parseJSON( msg );
 			
-			if (typeof(data.error)!=='undefined') {
-				p3d.analysing = false;
+                        if (typeof(data.error)!=='undefined') {
+                                p3dDebugLog('Analysis error received from server.', {
+                                        fileId: file_id,
+                                        error: data.error
+                                });
+                                p3d.analysing = false;
 				jQuery('#p3d-submit-button').prop('disabled', false);
 				p3d.analyse_queue[file_id].analyse_status = -1;
 				if (data.error.code==120) {
@@ -1295,17 +1416,21 @@ p3d.analyse_queue[file_id].dim_x
 
 			}
 
-			if (data.status == '2') { //in progress
-				var server = data.server;
-				p3d.checking = true;
-			        p3dDisplayPrice(false);
+                        if (data.status == '2') { //in progress
+                                var server = data.server;
+                                p3d.checking = true;
+                                p3dDisplayPrice(false);
 
-				jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 10%');
-				p3d.analyse_queue[file_id].analyse_status = 2;
+                                jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 10%');
+                                p3d.analyse_queue[file_id].analyse_status = 2;
 
-				p3d.refresh_interval = setInterval(function(){
-				    p3danalyseCheckBulk(filename, server, obj); 
-				}, 3000);
+                                p3dDebugLog('Analysis in progress on server; scheduling status checks.', {
+                                        fileId: file_id
+                                });
+
+                                p3d.refresh_interval = setInterval(function(){
+                                    p3danalyseCheckBulk(filename, server, obj);
+                                }, 3000);
 
 				
 			}
@@ -1324,22 +1449,29 @@ p3d.analyse_queue[file_id].dim_x
 				jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 100%');
 				p3d.analyse_queue[file_id].html_status = jQuery(obj).find('.plupload_file_status').html();
 
-				p3dCheckAllFinished();
+                                p3dCheckAllFinished();
 
-				price_field.html(p3d.text_bulk_analysing+' 100%')
-				clearInterval(p3d.refresh_interval);
-			}
+                                price_field.html(p3d.text_bulk_analysing+' 100%')
+                                clearInterval(p3d.refresh_interval);
+                                p3dDebugLog('Analysis completed successfully.', {
+                                        fileId: file_id
+                                });
+                        }
 
-			else if (data.status == '0') { //failed
-				jQuery(obj).find('.plupload_file_status').html(p3d.text_model_analyse_failed);
-				p3d.analyse_error = true;
-				p3d.analysing = false;
+                        else if (data.status == '0') { //failed
+                                jQuery(obj).find('.plupload_file_status').html(p3d.text_model_analyse_failed);
+                                p3d.analyse_error = true;
+                                p3d.analysing = false;
 
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				if (p3d.pricing_api_expired=='request') {
-					p3d.analyse_queue[file_id].fatal_error = 1;
-					p3d.analyse_queue[file_id].new_pricing = 'request';
-				}
+                                p3d.analyse_queue[file_id].analyse_status = -1;
+                                p3dDebugLog('Analysis failed.', {
+                                        fileId: file_id,
+                                        response: data
+                                });
+                                if (p3d.pricing_api_expired=='request') {
+                                        p3d.analyse_queue[file_id].fatal_error = 1;
+                                        p3d.analyse_queue[file_id].new_pricing = 'request';
+                                }
 			}
 
 		});
@@ -1349,13 +1481,19 @@ p3d.analyse_queue[file_id].dim_x
 
 function p3danalyseCheckBulk(filename, server, obj) {
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
-		return;
-	}
-	if (p3d.processing) {
-		return;
-	}
+        var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+        if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
+                p3dDebugLog('Skipping analyse status check; previous request still pending.', {
+                        fileId: file_id
+                });
+                return;
+        }
+        if (p3d.processing) {
+                p3dDebugLog('Skipping analyse status check; processing flag active.', {
+                        fileId: file_id
+                });
+                return;
+        }
 	//var infills = jQuery(obj).find('select[name=product_printer option:checked').data('infills')+'';
 	var printer_type = jQuery(obj).find('select[name=product_printer] option:checked').data('type')
 	var printer_id = jQuery(obj).find('select[name=product_printer]').val();
@@ -1400,9 +1538,12 @@ function p3danalyseCheckBulk(filename, server, obj) {
 
         p3dDisplayPrice(false);
 
-	if (p3d.analyse_queue[file_id].analyse_status==1 || p3d.analyse_queue[file_id].analyse_status==-1) return;
+        if (p3d.analyse_queue[file_id].analyse_status==1 || p3d.analyse_queue[file_id].analyse_status==-1) return;
 
-	p3d.analyse_queue[file_id].xhr2=jQuery.ajax({
+        p3dDebugLog('Sending analyse status check.', {
+                fileId: file_id
+        });
+        p3d.analyse_queue[file_id].xhr2=jQuery.ajax({
 		method: "POST",
 		type: "POST",
 		url: p3d.url,
@@ -1430,32 +1571,40 @@ function p3danalyseCheckBulk(filename, server, obj) {
 		.done(function( msg ) {
 			var data = jQuery.parseJSON( msg );
 
-			if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
-				p3d.analyse_error = true;
-				p3d.analysing = false;
-				jQuery(obj).find('.plupload_file_status').html(data.error.message);
-				if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				//p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
+                        if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
+                                p3d.analyse_error = true;
+                                p3d.analysing = false;
+                                jQuery(obj).find('.plupload_file_status').html(data.error.message);
+                                if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
+                                p3d.analyse_queue[file_id].analyse_status = -1;
+                                //p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
 
-				if (p3d.pricing_api_expired=='request') {
-					p3d.analyse_queue[file_id].fatal_error = 1;
-					p3d.analyse_queue[file_id].new_pricing = 'request';
-				}
-				p3dCheckAllFinished();
-				clearInterval(p3d.refresh_interval);
-			}
-			else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
-				jQuery(obj).find('.plupload_file_status').html(data.error.message);
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				p3d.analyse_queue[file_id].fatal_error = 1;
-				p3d.analyse_queue[file_id].new_pricing = data.error.new_pricing;
-			}
-			if (data.status=='1') {
-				p3d.checking = false;
-				p3d.analyse_error = false;
-				p3d.analysing = false;
-				p3dShowResponseBulk(obj, data);
+                                if (p3d.pricing_api_expired=='request') {
+                                        p3d.analyse_queue[file_id].fatal_error = 1;
+                                        p3d.analyse_queue[file_id].new_pricing = 'request';
+                                }
+                                p3dCheckAllFinished();
+                                clearInterval(p3d.refresh_interval);
+                                p3dDebugLog('Analyse status check returned error.', {
+                                        fileId: file_id,
+                                        error: data.error
+                                });
+                        }
+                        else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
+                                jQuery(obj).find('.plupload_file_status').html(data.error.message);
+                                p3d.analyse_queue[file_id].analyse_status = -1;
+                                p3d.analyse_queue[file_id].fatal_error = 1;
+                                p3d.analyse_queue[file_id].new_pricing = data.error.new_pricing;
+                                p3dDebugLog('Analyse status check requested new pricing.', {
+                                        fileId: file_id,
+                                        newPricing: data.error.new_pricing
+                                });
+                        }
+                        if (data.status=='1') {
+                                p3d.checking = false;
+                                p3d.analyse_error = false;
+                                p3d.analysing = false;
+                                p3dShowResponseBulk(obj, data);
 
 				if (typeof(data.print_time)!='undefined' && data.print_time==0 && p3d.api_analyse=='on') {
 					if (p3d.pricing_print_time_zero=='request') {
@@ -1464,17 +1613,24 @@ function p3danalyseCheckBulk(filename, server, obj) {
 						p3d.analyse_queue[file_id].new_pricing = 'request';
 					}
 				}
-				p3d.analyse_queue[file_id].analyse_status = 1;
+                                p3d.analyse_queue[file_id].analyse_status = 1;
 
-				p3dCheckAllFinished();
-				jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 100%');
-				p3d.analyse_queue[file_id].html_status = jQuery(obj).find('.plupload_file_status').html();
-				clearInterval(p3d.refresh_interval);
-			}
-			if (data.status=='2') {
-				p3d.analyse_queue[file_id].analyse_status = 2;
-				jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' '+data.progress+'%');
-			}
+                                p3dCheckAllFinished();
+                                jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' 100%');
+                                p3d.analyse_queue[file_id].html_status = jQuery(obj).find('.plupload_file_status').html();
+                                clearInterval(p3d.refresh_interval);
+                                p3dDebugLog('Analyse status check completed successfully.', {
+                                        fileId: file_id
+                                });
+                        }
+                        if (data.status=='2') {
+                                p3d.analyse_queue[file_id].analyse_status = 2;
+                                jQuery(obj).find('.plupload_file_status').html(p3d.text_bulk_analysing+' '+data.progress+'%');
+                                p3dDebugLog('Analyse status check indicates processing is ongoing.', {
+                                        fileId: file_id,
+                                        progress: data.progress
+                                });
+                        }
 
 		});
 	
@@ -1696,6 +1852,7 @@ function p3dSubmitFormBulk() {
 
 function p3dCheckAllFinished() {
         if (p3d.all_finished) {
+                p3dDebugLog('All files finished; enabling submission controls.');
                 jQuery('.p3d-button-loader').hide();
                 jQuery('#p3d-submit-button').prop('disabled', false);
                 jQuery('#p3d-submit-button').show();
@@ -1704,6 +1861,7 @@ function p3dCheckAllFinished() {
                 jQuery('.motqn-summary__primary').prop('disabled', false).removeClass('motqn-button--disabled');
         }
         else {
+                p3dDebugLog('Waiting for files to finish; disabling submission controls.');
                 jQuery('.p3d-button-loader').show();
                 jQuery('#p3d-submit-button').prop('disabled', true);
                 //jQuery('#p3d-submit-button').hide();
