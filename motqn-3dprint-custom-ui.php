@@ -57,7 +57,53 @@ add_action('wp_print_scripts', 'motqn_3dprint_dequeue_default_ui', 100);
 add_action('wp_print_styles', 'motqn_3dprint_dequeue_default_ui', 100);
 
 
-// --- CODE FOR STEP 4 (ENQUEUEING YOUR CUSTOM FILES) WILL GO HERE LATER ---
+/**
+ * Enqueue the custom uploader script and styles
+ * only on pages where the default UI was dequeued.
+ */
+function motqn_enqueue_custom_uploader_assets() {
+    // Repeat the same check used for dequeuing to ensure assets load only when needed.
+    if ( is_singular() && isset( $GLOBALS['post'] ) ) {
+        $post_content = $GLOBALS['post']->post_content;
 
+        // Check if the content has the [3dprint] shortcode AND contains 'mode="bulk"'
+        if ( has_shortcode( $post_content, '3dprint' ) && strpos( $post_content, 'mode="bulk"' ) !== false ) {
+
+            // --- Enqueue YOUR Custom Script ---
+            // Handle for the core Plupload script used by the original plugin (verify this handle is correct)
+            $core_plupload_handle = 'plupload.full.min.js';
+            // Get plugin version for cache busting
+            $plugin_data = get_plugin_data( __FILE__ );
+            $plugin_version = $plugin_data['Version'];
+
+            wp_enqueue_script(
+                'motqn-custom-uploader-js', // Unique handle for your script
+                plugin_dir_url( __FILE__ ) . 'js/motqn-custom-uploader.js', // Path to your JS file
+                array('jquery', $core_plupload_handle), // Dependencies
+                $plugin_version, // Use plugin version for cache busting
+                true // Load in footer
+            );
+
+            // --- Enqueue YOUR Custom Stylesheet ---
+            wp_enqueue_style(
+                'motqn-custom-uploader-css', // Unique handle for your style
+                plugin_dir_url( __FILE__ ) . 'css/motqn-custom-uploader.css', // Path to your CSS file
+                array(), // Dependencies (if any)
+                $plugin_version // Use plugin version
+            );
+
+            // --- Optional: Pass PHP data to JavaScript ---
+            // Example:
+            // wp_localize_script('motqn-custom-uploader-js', 'motqn_uploader_data', array(
+            //    'ajax_url' => admin_url('admin-ajax.php'),
+            //    'nonce'    => wp_create_nonce('motqn_uploader_nonce'),
+            //    'text_processing' => __('Processing...', 'motqn-3dprint-custom'),
+            //    // Add any other data your JS might need from PHP here
+            // ));
+        }
+    }
+}
+// Hook the enqueue function to wp_enqueue_scripts. Priority 110 ensures it runs AFTER dequeue (priority 100).
+add_action('wp_enqueue_scripts', 'motqn_enqueue_custom_uploader_assets', 110);
 
 ?>
