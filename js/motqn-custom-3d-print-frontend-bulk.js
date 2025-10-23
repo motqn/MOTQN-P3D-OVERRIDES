@@ -12,6 +12,106 @@ p3d.image_height=5;
 p3d.image_map=1;
 
 
+// --- MOTQN custom automation helpers ----------------------------------------------------
+p3d.auto_analysis_timer = null;
+
+function p3dScheduleAutoAnalysis(delay) {
+        if (typeof p3d === 'undefined') {
+                return;
+        }
+
+        if (typeof delay === 'undefined') {
+                delay = 300;
+        }
+
+        if (p3d.auto_analysis_timer) {
+                clearTimeout(p3d.auto_analysis_timer);
+        }
+
+        p3d.auto_analysis_timer = setTimeout(p3dMaybeStartAutoAnalysis, delay);
+}
+
+function p3dHasPendingAutoAnalysis() {
+        if (typeof p3d === 'undefined' || typeof p3d.analyse_queue === 'undefined') {
+                return false;
+        }
+
+        var hasPending = false;
+
+        jQuery.each(p3d.analyse_queue, function(fileId, file) {
+                if (!file || file.fatal_error) {
+                        return;
+                }
+
+                var $row = jQuery('#' + fileId);
+                var uploaded = !!file.uploaded;
+
+                if (!uploaded && typeof file.status !== 'undefined') {
+                        uploaded = (parseInt(file.status, 10) === 5);
+                }
+
+                if (!uploaded && $row.length) {
+                        if ($row.hasClass('plupload_done')) {
+                                uploaded = true;
+                        }
+                }
+
+                if (!uploaded) {
+                        return;
+                }
+
+                var repairStatus = (typeof file.repair_status === 'undefined') ? 1 : parseInt(file.repair_status, 10);
+                if (repairStatus === -1) {
+                        return;
+                }
+
+                if (repairStatus !== 1 && (p3d.api_repair === 'on' || p3d.server_triangulation === 'on' || file.triangulation_required)) {
+                        // wait for repair queue to finish before attempting to analyse
+                        hasPending = false;
+                        return true;
+                }
+
+                var analyseStatus = (typeof file.analyse_status === 'undefined') ? 0 : parseInt(file.analyse_status, 10);
+                if (analyseStatus === -1) {
+                        return;
+                }
+
+                if (analyseStatus === 0 || analyseStatus === 2) {
+                        hasPending = true;
+                        return false;
+                }
+        });
+
+        return hasPending;
+}
+
+function p3dMaybeStartAutoAnalysis() {
+        if (typeof p3d === 'undefined') {
+                return;
+        }
+
+        p3d.auto_analysis_timer = null;
+
+        if (typeof p3dAnalyseModelsBulk !== 'function') {
+                return;
+        }
+
+        if (p3d.repairing || p3d.analysing) {
+                p3dScheduleAutoAnalysis(500);
+                return;
+        }
+
+        if (p3d.analyse_ajax_interval_bulk) {
+                return;
+        }
+
+        if (p3dHasPendingAutoAnalysis()) {
+                p3d.analyse_requested = true;
+                p3dAnalyseModelsBulk();
+        }
+}
+
+
 function p3dInitBulk() {
 	if (p3d.tooltip_engine=='tooltipster') {
 		jQuery('.p3d-tooltip').tooltipster({ contentAsHTML: true, maxWidth: 350, theme: 'tooltipster-'+p3d.tooltip_theme });
@@ -131,8 +231,9 @@ jQuery(function() {
 		FileUploaded: function(p3d_uploader,file,response) {
 			var data = jQuery.parseJSON( response.response )
 
-			file.server_name = data.filename;
-			p3d.analyse_queue[file.id] = file;
+                        file.server_name = data.filename;
+                        file.uploaded = true;
+                        p3d.analyse_queue[file.id] = file;
 			var file_ext = file.server_name.split('.').pop().toLowerCase();
 			var file_id = file.id;
 
@@ -246,9 +347,10 @@ jQuery(function() {
 				});
 			}
 	
-			p3dAnalyseModelBulk (file.id);
-		},
-		UploadComplete: function(p3d_uploader, files) {
+                        p3dAnalyseModelBulk (file.id);
+                        p3dScheduleAutoAnalysis();
+                },
+                UploadComplete: function(p3d_uploader, files) {
 
 			if (p3d.api_repair!='on' && p3d.server_triangulation=='on') { //need to force repair for obj models
 				jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
@@ -275,13 +377,15 @@ jQuery(function() {
 
 				p3dRepairModelsBulk();
 			}
-			else {
-				jQuery('#p3d-calculate-price-button').prop('disabled', false);
-				jQuery('#p3d-calculate-loader').hide();
-			}
-		}
-		}
-	});
+                        else {
+                                jQuery('#p3d-calculate-price-button').prop('disabled', false);
+                                jQuery('#p3d-calculate-loader').hide();
+                        }
+
+                        p3dScheduleAutoAnalysis(400);
+                }
+                }
+        });
 
 
 });
@@ -985,10 +1089,11 @@ function p3dRepairModelsBulk() {
 		}
 	
 	});
-	if (!any_to_repair) {
-		jQuery('#p3d-calculate-price-button').prop('disabled', false);
-		jQuery('#p3d-calculate-loader').hide();
-	}
+        if (!any_to_repair) {
+                jQuery('#p3d-calculate-price-button').prop('disabled', false);
+                jQuery('#p3d-calculate-loader').hide();
+                p3dScheduleAutoAnalysis(300);
+        }
 }
 function p3dAnalyseModelBulk(file_id) {
 	if (typeof(file_id)=='undefined') return;
@@ -998,11 +1103,13 @@ function p3dAnalyseModelBulk(file_id) {
 	}
 	clearInterval(p3d.refresh_interval);	              
 
-	p3d.analyse_queue[file_id].analyse_status = 0;
-	p3d.analyse_queue[file_id].new_pricing = false;
-	p3d.analyse_requested = true;
-	jQuery('#p3d-calculate-price-button').show();
-	jQuery('#p3d-submit-button').prop('disabled', true);
+        p3d.analyse_queue[file_id].analyse_status = 0;
+        p3d.analyse_queue[file_id].new_pricing = false;
+        p3d.analyse_requested = true;
+        jQuery('#p3d-calculate-price-button').prop('disabled', true).hide();
+        jQuery('#p3d-calculate-loader').show();
+        jQuery('#p3d-submit-button').prop('disabled', true);
+        p3dScheduleAutoAnalysis(200);
 }
 
 function p3dAnalyseModelsBulk() {
@@ -1043,12 +1150,13 @@ function p3dAnalyseModelsBulk() {
 					return; //continue
 				}
 			}
-		})
-		if (p3d.all_finished) {
-			clearInterval(p3d.analyse_ajax_interval_bulk);
-		}
+                })
+                if (p3d.all_finished) {
+                        clearInterval(p3d.analyse_ajax_interval_bulk);
+                        p3d.analyse_ajax_interval_bulk = null;
+                }
 
-		p3dCheckAllFinished();
+                p3dCheckAllFinished();
 
 	}, 1000);
 }
@@ -1582,26 +1690,30 @@ function p3dSubmitFormBulk() {
 }
 
 function p3dCheckAllFinished() {
-	if (p3d.all_finished) {
-		jQuery('.p3d-button-loader').hide();
-		jQuery('#p3d-submit-button').prop('disabled', false);
-		jQuery('#p3d-submit-button').show();
-		jQuery('#p3d-bulk-uploader_browse').show();
-		jQuery('.p3d-stats-bulk').find('select').prop('disabled', false);
-	}
-	else {
-		jQuery('.p3d-button-loader').show();
-		jQuery('#p3d-submit-button').prop('disabled', true);
-		//jQuery('#p3d-submit-button').hide();
-		jQuery('#p3d-bulk-uploader_browse').hide();
-		jQuery('.p3d-stats-bulk').find('select').prop('disabled', true);
-	}
+        if (p3d.all_finished) {
+                jQuery('.p3d-button-loader').hide();
+                jQuery('#p3d-submit-button').prop('disabled', false);
+                jQuery('#p3d-submit-button').show();
+                jQuery('#p3d-bulk-uploader_browse').show();
+                jQuery('.p3d-stats-bulk').find('select').prop('disabled', false);
+                jQuery('.motqn-summary__primary').prop('disabled', false).removeClass('motqn-button--disabled');
+        }
+        else {
+                jQuery('.p3d-button-loader').show();
+                jQuery('#p3d-submit-button').prop('disabled', true);
+                //jQuery('#p3d-submit-button').hide();
+                jQuery('#p3d-bulk-uploader_browse').hide();
+                jQuery('.p3d-stats-bulk').find('select').prop('disabled', true);
+                jQuery('.motqn-summary__primary').prop('disabled', true).addClass('motqn-button--disabled');
+        }
 }
 
 
 
 jQuery(document).ready(function(){
-	p3dInitBulk();
-})
+        p3dInitBulk();
+        jQuery('#p3d-calculate-price-button').hide();
+        p3dScheduleAutoAnalysis(200);
+});
 
 
