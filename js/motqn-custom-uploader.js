@@ -1430,3 +1430,678 @@ used as it is.
 		}
 	};
 })(jQuery, mOxie);
+;(function($) {
+    'use strict';
+
+    var MOTQN = {
+        init: function() {
+            var self = this;
+            $(function() {
+                self.$uploaders = $('.motqn-uploader');
+                self.$uploaders.each(function() {
+                    self.setupUploader($(this));
+                });
+                self.bindGlobalEvents();
+            });
+        },
+
+        bindGlobalEvents: function() {
+            if (this._eventsBound) {
+                return;
+            }
+            this._eventsBound = true;
+            var self = this;
+
+            if (window.wp && window.wp.event_manager && typeof window.wp.event_manager.addAction === 'function') {
+                window.wp.event_manager.addAction('3dprint.fileList_appended', function() {
+                    $('.motqn-uploader').each(function() {
+                        self.ensureWorkspace($(this));
+                        self.refreshUploader($(this));
+                    });
+                });
+            }
+
+            $(document).on('click', '.motqn-card-list .p3d-file-action', function() {
+                var $uploader = $(this).closest('.motqn-uploader');
+                setTimeout(function() {
+                    self.refreshUploader($uploader);
+                }, 80);
+            });
+
+            $(document).on('input change', '.motqn-card-list .plupload_file_qty input', function() {
+                var $input = $(this);
+                var $card = $input.closest('.p3d-filelist-item');
+                self.ensureQuantityValue($input);
+                self.updateCardPrice($card);
+                self.updateSummary($card.closest('.motqn-uploader'));
+            });
+        },
+
+        setupUploader: function($uploader) {
+            if (!$uploader.length || $uploader.data('motqnPrepared')) {
+                return;
+            }
+            $uploader.data('motqnPrepared', true).addClass('motqn-uploader--enhanced');
+            this.ensureWorkspace($uploader);
+            this.attachListObserver($uploader);
+            this.refreshUploader($uploader);
+        },
+
+        ensureWorkspace: function($uploader) {
+            var $main = $uploader.find('.motqn-uploader__main');
+            if (!$main.length) {
+                return;
+            }
+
+            var $dropzone = $main.find('.motqn-uploader__dropzone');
+            if (!$dropzone.length) {
+                return;
+            }
+
+            var $fileList = $dropzone.find('.motqn-card-list');
+            var $workspace = $main.find('.motqn-uploader__workspace');
+
+            if (!$workspace.length) {
+                $workspace = $('<div class="motqn-uploader__workspace"></div>');
+                var $dropWrapper = $('<div class="motqn-uploader__dropzone-wrapper"></div>').append($dropzone);
+                var $queue = $('<div class="motqn-uploader__queue"></div>');
+                if ($fileList.length) {
+                    $queue.append($fileList);
+                }
+                $workspace.append($dropWrapper).append($queue);
+                $dropzone.after($workspace);
+            } else {
+                if (!$dropzone.parent().hasClass('motqn-uploader__dropzone-wrapper')) {
+                    $dropzone.wrap('<div class="motqn-uploader__dropzone-wrapper"></div>');
+                }
+                if ($fileList.length) {
+                    var $queueExisting = $workspace.find('.motqn-uploader__queue');
+                    if (!$queueExisting.length) {
+                        $queueExisting = $('<div class="motqn-uploader__queue"></div>').appendTo($workspace);
+                    }
+                    $queueExisting.append($fileList);
+                }
+            }
+
+            var $summary = $main.find('.motqn-summary');
+            if ($summary.length) {
+                $summary.addClass('motqn-summary--footer');
+                if (!$summary.parent().is($main)) {
+                    $summary.appendTo($main);
+                } else {
+                    $summary.appendTo($main);
+                }
+            }
+        },
+
+        attachListObserver: function($uploader) {
+            var $list = $uploader.find('.motqn-card-list');
+            if (!$list.length || $list.data('motqnListObserver')) {
+                return;
+            }
+            var self = this;
+            var observer = new MutationObserver(function() {
+                self.refreshUploader($uploader);
+            });
+            observer.observe($list[0], { childList: true });
+            $list.data('motqnListObserver', observer);
+        },
+
+        refreshUploader: function($uploader) {
+            if (!$uploader.length || $uploader.data('motqnRefreshing')) {
+                return;
+            }
+            $uploader.data('motqnRefreshing', true);
+            var self = this;
+            $uploader.find('.motqn-card-list > li.p3d-filelist-item').each(function() {
+                self.enhanceCard($(this));
+            });
+            self.updateSummary($uploader);
+            $uploader.data('motqnRefreshing', false);
+        },
+
+        enhanceCard: function($card) {
+            if (!$card.length) {
+                return;
+            }
+            $card.addClass('motqn-file-card');
+
+            var $container = $card.children('.motqn-file-card__container');
+            if (!$container.length) {
+                $container = $('<div class="motqn-file-card__container"></div>');
+                $container.append($card.contents());
+                $card.append($container);
+            }
+
+            var $name = $container.find('.plupload_file_name');
+            var $price = $container.find('.plupload_file_price');
+            var $qty = $container.find('.plupload_file_qty');
+            var $action = $container.find('.plupload_file_action');
+            var $status = $container.find('.plupload_file_status');
+            var $size = $container.find('.plupload_file_size');
+
+            var $header = $container.children('.motqn-file-card__header');
+            if (!$header.length) {
+                $header = $('<div class="motqn-file-card__header"></div>');
+                var $meta = $('<div class="motqn-file-card__meta"></div>');
+                var $controls = $('<div class="motqn-file-card__controls"></div>');
+                $meta.append($name);
+                $controls.append($price).append($qty).append($action);
+                $header.append($meta).append($controls);
+                $container.prepend($header);
+            } else {
+                $header.find('.motqn-file-card__meta').append($name);
+                $header.find('.motqn-file-card__controls').append($price).append($qty).append($action);
+            }
+
+            $name.find('.plupload_info_icon').remove();
+
+            var $imageWrapper = $name.find('.plupload_file_image').detach();
+            var $media = $container.children('.motqn-file-card__media');
+            if (!$media.length) {
+                $media = $('<div class="motqn-file-card__media"></div>');
+                $header.after($media);
+            }
+            var $preview = $media.children('.motqn-file-card__preview');
+            if (!$preview.length) {
+                $preview = $('<div class="motqn-file-card__preview"></div>').appendTo($media);
+            }
+            if ($imageWrapper && $imageWrapper.length && $imageWrapper.html().trim().length) {
+                $preview.empty().append($imageWrapper);
+            } else if (!$preview.children().length) {
+                $preview.html('<div class="motqn-file-card__no-preview">' + this.translate('Preview not available') + '</div>');
+            }
+
+            var statsHtml = this.extractStatsForCard($card.attr('id'));
+            var $stats = $media.children('.motqn-file-card__stats');
+            if (!$stats.length) {
+                $stats = $('<div class="motqn-file-card__stats"></div>').appendTo($media);
+            }
+            if (statsHtml) {
+                $stats.html(statsHtml).addClass('motqn-file-card__stats--visible');
+            } else if (!$stats.children().length) {
+                $stats.html('<p class="motqn-file-card__stats-placeholder">' + this.translate('Model details will appear here after analysis.') + '</p>');
+            }
+
+            var $progress = $container.children('.motqn-file-card__status');
+            if (!$progress.length) {
+                $progress = $('<div class="motqn-file-card__status"></div>');
+                $container.append($progress);
+            }
+            $progress.append($status).append($size);
+
+            $container.find('.plupload_clearer').remove();
+
+            var $config = $container.children('.motqn-file-card__config');
+            if (!$config.length) {
+                $config = $('<div class="motqn-file-card__config"></div>');
+                $container.append($config);
+            }
+            $container.find('table.p3d-stats-bulk').appendTo($config);
+
+            this.enhanceMaterialSelectors($config);
+            this.attachPriceObserver($card);
+            this.updateCardPrice($card);
+        },
+
+        extractStatsForCard: function(id) {
+            if (!id) {
+                return '';
+            }
+            var $overlay = $('#plupload-popup-' + id);
+            if (!$overlay.length) {
+                return '';
+            }
+            var html = $overlay.find('.plupload-content').html();
+            $overlay.remove();
+            return html;
+        },
+
+        ensureQuantityValue: function($input) {
+            var value = parseInt($input.val(), 10);
+            if (!value || value < 1) {
+                value = 1;
+            }
+            $input.val(value);
+            return value;
+        },
+
+        getQuantity: function($card) {
+            var $input = $card.find('.plupload_file_qty input');
+            if (!$input.length) {
+                return 1;
+            }
+            return this.ensureQuantityValue($input);
+        },
+
+        attachPriceObserver: function($card) {
+            var $price = $card.find('.plupload_file_price');
+            if (!$price.length || $price.data('motqnPriceObserver')) {
+                return;
+            }
+            var self = this;
+            var observer = new MutationObserver(function() {
+                if ($price.data('motqnUpdating')) {
+                    return;
+                }
+                $price.removeData('motqnRawPrice');
+                self.updateCardPrice($card);
+                self.updateSummary($card.closest('.motqn-uploader'));
+            });
+            observer.observe($price[0], { childList: true, subtree: true });
+            $price.data('motqnPriceObserver', observer);
+        },
+
+        updateCardPrice: function($card) {
+            var $price = $card.find('.plupload_file_price');
+            if (!$price.length) {
+                return;
+            }
+
+            var raw = $price.data('motqnRawPrice');
+            if (!raw) {
+                if ($price.find('.motqn-price').length) {
+                    raw = $price.data('motqnRawHtml');
+                } else {
+                    raw = $price.html();
+                }
+            }
+            if (!raw) {
+                return;
+            }
+
+            $price.data('motqnRawPrice', raw);
+            $price.data('motqnUpdating', true);
+
+            var qty = this.getQuantity($card);
+            var meta = this.parsePrice(raw);
+            var totalText = meta ? this.formatPrice(meta, meta.value * qty) : raw;
+
+            var markup = '<div class="motqn-price"' + (meta ? ' data-motqn-price="true"' : '') + '>' +
+                '<div class="motqn-price__row motqn-price__row--unit">' +
+                    '<span class="motqn-price__label">' + this.translate('Unit Price') + '</span>' +
+                    '<span class="motqn-price__value motqn-price__value--unit">' + raw + '</span>' +
+                '</div>' +
+                '<div class="motqn-price__row motqn-price__row--total">' +
+                    '<span class="motqn-price__label">' + this.translate('Total') + '</span>' +
+                    '<span class="motqn-price__value motqn-price__value--total">' + totalText + '</span>' +
+                '</div>' +
+            '</div>';
+
+            $price.html(markup);
+            if (meta) {
+                $price.data('motqnPriceMeta', meta);
+            } else {
+                $price.removeData('motqnPriceMeta');
+            }
+            $price.data('motqnUpdating', false);
+            $price.data('motqnRawHtml', raw);
+        },
+
+        parsePrice: function(html) {
+            if (!html) {
+                return null;
+            }
+            var text = $('<div>').html(html).text().trim();
+            if (!text) {
+                return null;
+            }
+            var match = text.match(/-?\d[\d.,]*/);
+            if (!match) {
+                return null;
+            }
+
+            var numberPart = match[0];
+            var prefix = text.slice(0, match.index);
+            var suffix = text.slice(match.index + numberPart.length);
+            var hasComma = numberPart.indexOf(',') !== -1;
+            var hasDot = numberPart.indexOf('.') !== -1;
+            var decimalSeparator = null;
+            var thousandSeparator = null;
+
+            if (hasComma && hasDot) {
+                if (numberPart.lastIndexOf('.') > numberPart.lastIndexOf(',')) {
+                    decimalSeparator = '.';
+                    thousandSeparator = ',';
+                } else {
+                    decimalSeparator = ',';
+                    thousandSeparator = '.';
+                }
+            } else if (hasComma) {
+                decimalSeparator = ',';
+            } else if (hasDot) {
+                decimalSeparator = '.';
+            } else {
+                decimalSeparator = '.';
+            }
+
+            var normalized = numberPart;
+            if (thousandSeparator) {
+                var reg = new RegExp('\\' + thousandSeparator, 'g');
+                normalized = normalized.replace(reg, '');
+            }
+            normalized = normalized.replace(/[^0-9,.-]/g, '');
+            if (decimalSeparator === ',') {
+                normalized = normalized.replace(',', '.');
+            }
+            var value = parseFloat(normalized);
+            if (!isFinite(value)) {
+                return null;
+            }
+
+            var decimals = 0;
+            if (decimalSeparator) {
+                var last = numberPart.lastIndexOf(decimalSeparator);
+                if (last !== -1) {
+                    decimals = numberPart.length - last - 1;
+                }
+            }
+
+            var locale = decimalSeparator === ',' ? 'de-DE' : 'en-US';
+
+            return {
+                value: value,
+                prefix: prefix,
+                suffix: suffix,
+                decimals: decimals,
+                locale: locale,
+                decimalSeparator: decimalSeparator
+            };
+        },
+
+        formatPrice: function(meta, value) {
+            if (!meta) {
+                return value;
+            }
+            var options = {
+                minimumFractionDigits: meta.decimals,
+                maximumFractionDigits: meta.decimals
+            };
+            var formatted;
+            try {
+                formatted = new Intl.NumberFormat(meta.locale || undefined, options).format(value);
+            } catch (e) {
+                formatted = value.toFixed(meta.decimals);
+            }
+            if (meta.decimalSeparator === ',' && formatted.indexOf(',') === -1 && formatted.indexOf('.') !== -1) {
+                formatted = formatted.replace('.', ',');
+            }
+            return (meta.prefix || '') + formatted + (meta.suffix || '');
+        },
+
+        updateSummary: function($uploader) {
+            if (!$uploader.length) {
+                return;
+            }
+            var total = 0;
+            var metaRef = null;
+            var self = this;
+
+            $uploader.find('.motqn-card-list > li.p3d-filelist-item').each(function() {
+                var $price = $(this).find('.plupload_file_price');
+                var meta = $price.data('motqnPriceMeta');
+                if (!meta) {
+                    return;
+                }
+                if (!metaRef) {
+                    metaRef = $.extend({}, meta);
+                }
+                var qty = self.getQuantity($(this));
+                total += meta.value * qty;
+            });
+
+            var $summary = $uploader.find('.plupload_total_price');
+            if (!$summary.length) {
+                return;
+            }
+
+            if (metaRef) {
+                $summary.text(this.formatPrice(metaRef, total));
+            } else if ($uploader.find('.p3d-filelist-item').length) {
+                $summary.text(this.translate('Calculating…'));
+            } else {
+                $summary.text('0');
+            }
+        },
+
+        enhanceMaterialSelectors: function($context) {
+            var self = this;
+            $context.find('select[name="product_filament"]').each(function() {
+                var $select = $(this);
+                if ($select.hasClass('motqn-material--enhanced')) {
+                    return;
+                }
+                var materials = self.collectMaterialOptions($select);
+                if (!materials.groups.length) {
+                    return;
+                }
+                $select.addClass('motqn-material--enhanced').hide();
+                var $picker = self.renderMaterialPicker(materials, $select);
+                $select.after($picker);
+                self.syncMaterialPicker($picker, $select, materials);
+            });
+        },
+
+        collectMaterialOptions: function($select) {
+            var groups = {};
+            var ordered = [];
+            var optionsByValue = {};
+            var self = this;
+
+            $select.find('option').each(function(index) {
+                var $option = $(this);
+                var value = $option.attr('value');
+                if (!value) {
+                    return;
+                }
+                var data = self.materialDataFromOption($option, index);
+                var key = data.groupKey;
+                if (!groups[key]) {
+                    groups[key] = {
+                        key: key,
+                        label: data.groupLabel,
+                        options: []
+                    };
+                    ordered.push(groups[key]);
+                }
+                var optionItem = {
+                    value: value,
+                    label: data.label,
+                    color: data.color,
+                    image: data.image,
+                    groupKey: key
+                };
+                groups[key].options.push(optionItem);
+                optionsByValue[value] = $.extend({}, optionItem);
+            });
+
+            return {
+                groups: ordered,
+                optionsByValue: optionsByValue
+            };
+        },
+
+        materialDataFromOption: function($option, index) {
+            var label = $.trim($option.text());
+            var group = $option.data('group') || $option.attr('data-group') || '';
+            var color = $option.data('color') || $option.attr('data-color') || '';
+            var image = $option.data('image') || $option.attr('data-image') || $option.data('preview') || $option.attr('data-preview') || '';
+            var groupLabel = group;
+            var colorLabel = color;
+
+            if ((!groupLabel || !colorLabel) && label.indexOf('-') !== -1) {
+                var parts = label.split('-');
+                if (!groupLabel) {
+                    groupLabel = $.trim(parts[0]);
+                }
+                if (!colorLabel) {
+                    colorLabel = $.trim(parts.slice(1).join('-')) || label;
+                }
+            }
+
+            if (!groupLabel) {
+                groupLabel = label || this.translate('Material');
+            }
+            if (!colorLabel) {
+                colorLabel = label || this.translate('Color');
+            }
+
+            var key = groupLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+            if (!key) {
+                key = 'group-' + index;
+            }
+
+            return {
+                groupKey: key,
+                groupLabel: groupLabel,
+                label: colorLabel,
+                color: color,
+                image: image
+            };
+        },
+
+        renderMaterialPicker: function(materials, $select) {
+            var self = this;
+            var $picker = $('<div class="motqn-material-picker"></div>');
+            var $groupSection = $('<div class="motqn-material-picker__section"></div>');
+            $groupSection.append('<span class="motqn-material-picker__title">' + this.translate('Material Group') + '</span>');
+            var $groupSelect = $('<select class="motqn-material-picker__select"></select>');
+            $groupSelect.append('<option value="">' + this.translate('Select a group') + '</option>');
+            materials.groups.forEach(function(group) {
+                $groupSelect.append('<option value="' + group.key + '">' + group.label + '</option>');
+            });
+            $groupSection.append($groupSelect);
+            $picker.append($groupSection);
+
+            var $colorSection = $('<div class="motqn-material-picker__section"></div>');
+            $colorSection.append('<span class="motqn-material-picker__title">' + this.translate('Color') + '</span>');
+            var $colorList = $('<div class="motqn-material-picker__colors"></div>');
+            $colorSection.append($colorList);
+            $picker.append($colorSection);
+
+            $picker.data('motqnMaterials', materials);
+            $picker.data('motqnHiddenSelect', $select);
+            $picker.data('motqnGroupSelect', $groupSelect);
+            $picker.data('motqnColorList', $colorList);
+
+            $groupSelect.on('change', function() {
+                self.renderColorOptions($picker, this.value);
+            });
+
+            $colorList.on('click', '.motqn-material-picker__color', function() {
+                var value = $(this).data('value');
+                self.selectMaterialValue($picker, value, true);
+            });
+
+            return $picker;
+        },
+
+        renderColorOptions: function($picker, groupKey) {
+            var materials = $picker.data('motqnMaterials');
+            var $colorList = $picker.data('motqnColorList');
+            var $select = $picker.data('motqnHiddenSelect');
+            var currentValue = $select.val();
+
+            $colorList.empty();
+
+            var group = null;
+            materials.groups.forEach(function(item) {
+                if (item.key === groupKey) {
+                    group = item;
+                }
+            });
+
+            if (!group) {
+                $colorList.append('<p class="motqn-material-picker__empty">' + this.translate('Select a material group to view colors.') + '</p>');
+                return;
+            }
+
+            group.options.forEach(function(option) {
+                var $button = $('<button type="button" class="motqn-material-picker__color"></button>');
+                $button.attr('data-value', option.value);
+                $button.append('<span class="motqn-material-picker__color-chip"></span>');
+                $button.append('<span class="motqn-material-picker__color-label">' + option.label + '</span>');
+                if (option.color) {
+                    $button[0].style.setProperty('--motqn-chip-color', option.color);
+                }
+                if (option.image) {
+                    $button.addClass('motqn-material-picker__color--has-preview');
+                    $button[0].style.setProperty('--motqn-color-preview', 'url("' + option.image + '")');
+                }
+                if (option.value === currentValue) {
+                    $button.addClass('is-active');
+                }
+                $colorList.append($button);
+            });
+
+            if (!group.options.length) {
+                $colorList.append('<p class="motqn-material-picker__empty">' + this.translate('No colors available for this group.') + '</p>');
+            }
+        },
+
+        selectMaterialValue: function($picker, value, trigger) {
+            var $select = $picker.data('motqnHiddenSelect');
+            if (!$select || !value) {
+                return;
+            }
+            $select.val(value);
+            if (trigger) {
+                $select.trigger('change');
+            }
+            var materials = $picker.data('motqnMaterials');
+            var option = materials.optionsByValue[value];
+            if (option) {
+                var $groupSelect = $picker.data('motqnGroupSelect');
+                if ($groupSelect.val() !== option.groupKey) {
+                    $groupSelect.val(option.groupKey);
+                    this.renderColorOptions($picker, option.groupKey);
+                }
+                var $colorList = $picker.data('motqnColorList');
+                $colorList.find('.motqn-material-picker__color').removeClass('is-active');
+                $colorList.find('.motqn-material-picker__color[data-value="' + value + '"]').addClass('is-active');
+            }
+        },
+
+        syncMaterialPicker: function($picker, $select, materials) {
+            var self = this;
+            $select.on('change.motqn', function() {
+                var value = $(this).val();
+                var option = materials.optionsByValue[value];
+                var $groupSelect = $picker.data('motqnGroupSelect');
+                if (option) {
+                    if ($groupSelect.val() !== option.groupKey) {
+                        $groupSelect.val(option.groupKey);
+                        self.renderColorOptions($picker, option.groupKey);
+                    }
+                    var $colorList = $picker.data('motqnColorList');
+                    $colorList.find('.motqn-material-picker__color').removeClass('is-active');
+                    $colorList.find('.motqn-material-picker__color[data-value="' + value + '"]').addClass('is-active');
+                } else {
+                    $groupSelect.val('');
+                    self.renderColorOptions($picker, '');
+                }
+            });
+
+            var initial = $select.val();
+            if (initial) {
+                this.selectMaterialValue($picker, initial, false);
+            } else if (materials.groups.length) {
+                var firstGroup = materials.groups[0];
+                $picker.data('motqnGroupSelect').val(firstGroup.key);
+                this.renderColorOptions($picker, firstGroup.key);
+            } else {
+                this.renderColorOptions($picker, '');
+            }
+        },
+
+        translate: function(text) {
+            if (window.plupload && typeof window.plupload.translate === 'function') {
+                return window.plupload.translate(text) || text;
+            }
+            return text;
+        }
+    };
+
+    MOTQN.init();
+
+})(jQuery);
