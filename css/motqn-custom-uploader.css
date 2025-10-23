@@ -41,31 +41,19 @@
     overflow: visible !important; /* don't break sticky */
 }
 
-.motqn-uploader__header {
+.motqn-uploader__upload-section,
+.motqn-uploader__files-section {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
+    flex-direction: column;
     gap: 24px;
-    padding-bottom: 20px;
 }
 
-.motqn-uploader__intro {
-    max-width: 520px;
-}
-
-.motqn-uploader__title {
-    margin: 0;
-    font-size: 30px;
-    line-height: 1.1;
-    font-weight: 600;
-    color: #0b1934;
-}
-
-.motqn-uploader__subtitle {
-    margin: 12px 0 0;
-    font-size: 15px;
-    color: #64748b;
+.motqn-uploader__files-section {
+    padding: 32px 28px;
+    border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.94), #ffffff 88%);
+    box-shadow: 0 22px 42px rgba(15, 23, 42, 0.08);
 }
 
 .plupload_buttons {

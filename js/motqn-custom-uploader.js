@@ -94,14 +94,9 @@ used as it is.
                 target.prepend(
                         '<div class="plupload_wrapper plupload_scroll motqn-uploader">' +
                                 '<div id="' + id + '_container" class="plupload_container">' +
-                                        '<div class="plupload motqn-uploader__grid">' +
-                                                '<div class="motqn-uploader__main">' +
-                                                        '<div class="motqn-uploader__header">' +
-                                                                '<div class="motqn-uploader__intro">' +
-                                                                        '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
-                                                                        '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
-                                                                '</div>' +
-                                                        '</div>' +
+                                '<div class="plupload motqn-uploader__grid">' +
+                                        '<div class="motqn-uploader__main">' +
+                                                '<section class="motqn-uploader__upload-section" aria-label="' + _('Upload files') + '">' +
                                                         '<div class="plupload_progress motqn-progress">' +
                                                                 '<div class="plupload_progress_container">' +
                                                                         '<div class="plupload_progress_bar"></div>' +
@@ -119,9 +114,12 @@ used as it is.
                                                                                 '<span class="plupload_upload_status"></span>' +
                                                                         '</div>' +
                                                                 '</div>' +
-                                                                '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
                                                         '</div>' +
-                                                '</div>' +
+                                                '</section>' +
+                                                '<section class="motqn-uploader__files-section" aria-label="' + _('Files in queue') + '">' +
+                                                        '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
+                                                '</section>' +
+                                        '</div>' +
                                                 '<aside class="motqn-summary">' +
                                                         '<div class="motqn-summary__card">' +
                                                                 '<h3 class="motqn-summary__title">' + _('Charge Details') + '</h3>' +
