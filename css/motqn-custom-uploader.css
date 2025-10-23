@@ -171,16 +171,7 @@
 }
 
 .motqn-uploader__dropzone::after {
-    content: "";
-    position: absolute;
-    top: -16px;
-    left: 32px;
-    right: 32px;
-    height: 4px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, #38bdf8 0%, #2563eb 55%, #1e40af 100%);
-    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.24);
-    pointer-events: none;
+    content: none;
 }
 
 .motqn-uploader__dropzone:hover,
