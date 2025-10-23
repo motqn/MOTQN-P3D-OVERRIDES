@@ -24,6 +24,7 @@
 .motqn-uploader__grid {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
     gap: 32px;
 }
 
@@ -303,10 +304,15 @@
 }
 
 .motqn-summary {
-    flex: 1 1 260px;
+    flex: 0 0 280px;
     min-width: 240px;
+    max-width: 320px;
     display: flex;
     justify-content: center;
+    margin-left: auto;
+    align-self: flex-start;
+    position: sticky;
+    top: 24px;
 }
 
 .motqn-summary__card {
@@ -314,8 +320,8 @@
     background: radial-gradient(circle at top, #1d4ed8 0%, #0f172a 80%);
     border-radius: 24px;
     color: #e2e8f0;
-    padding: 28px;
-    box-shadow: 0 26px 45px rgba(30, 58, 138, 0.38);
+    padding: 24px;
+    box-shadow: 0 26px 45px rgba(30, 58, 138, 0.32);
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -432,6 +438,10 @@
     }
 
     .motqn-summary {
+        position: static;
+        top: auto;
+        align-self: stretch;
+        margin-left: 0;
         width: 100%;
     }
 }
