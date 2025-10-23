@@ -21,19 +21,24 @@
     color: #0f172a;
 }
 
+/* ==== LAYOUT: switch to two-column grid (left: uploader / right: sticky summary) ==== */
 .motqn-uploader__grid {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
     gap: 32px;
+    align-items: start;
+    /* ensure no accidental overflow/contain on this grid */
+    overflow: visible !important;
+    contain: none !important;
 }
 
 .motqn-uploader__main {
-    flex: 1 1 60%;
     min-width: 320px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    grid-column: 1 / 2;
+    overflow: visible !important; /* don't break sticky */
 }
 
 .motqn-uploader__header {
@@ -303,16 +308,16 @@
     background: #ffffff;
 }
 
+/* ==== STICKY SUMMARY (RIGHT) ==== */
 .motqn-summary {
-    flex: 0 0 280px;
-    min-width: 240px;
-    max-width: 320px;
-    display: flex;
-    justify-content: center;
+    grid-column: 2 / 3;
+    position: sticky !important;
+    top: 50px;                 /* requested distance from top */
+    align-self: start;
+    z-index: 1;
+    width: 100%;
+    max-width: 340px;
     margin-left: auto;
-    align-self: flex-start;
-    position: sticky;
-    top: 24px;
 }
 
 .motqn-summary__card {
@@ -325,6 +330,8 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-height: calc(100vh - 50px); /* view-height guard while sticky */
+    overflow: auto;                  /* inner scroll if content grows */
 }
 
 .motqn-summary__title {
@@ -408,13 +415,48 @@
     color: #ef4444;
 }
 
+/* ==== UNBLOCK STICKY INSIDE WP/PLUPLOAD/WOOSTIFY WRAPPERS ==== */
+#main,
+#main .hentry,
+#main article,
+#main .entry-content,
+#main .plupload_wrapper,
+#main .plupload_container,
+#main .plupload,
+#main .motqn-uploader__grid,
+#view,
+#content,
+.site-content,
+.woostify-container,
+#primary,
+.content-area,
+.site-main,
+.site-footer,
+.select2-container {
+    overflow: visible !important;
+    contain: none !important;
+    transform: none !important;
+    filter: none !important;
+}
+/* Plupload often adds this: make sure it's visible */
+.plupload_scroll { overflow: visible !important; }
+/* Prevent unexpected stacking contexts from specific elements */
+.moxie-shim { transform: none !important; }
+
 @media (max-width: 960px) {
     .motqn-uploader {
         padding: 24px;
     }
 
     .motqn-uploader__grid {
+        grid-template-columns: 1fr;
         gap: 24px;
+    }
+
+    .motqn-summary {
+        grid-column: 1 / -1;
+        max-width: none;
+        top: 25px; /* keep same offset on tablet */
     }
 
     .motqn-card-list li:not(.plupload_droptext) {
@@ -437,11 +479,12 @@
         flex: 1 1 auto;
     }
 
+    /* On very small screens we can let it be normal flow if desired */
     .motqn-summary {
         position: static;
         top: auto;
         align-self: stretch;
-        margin-left: 0;
         width: 100%;
+        margin-left: 0;
     }
 }
