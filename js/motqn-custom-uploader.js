@@ -94,54 +94,34 @@ used as it is.
                 target.prepend(
                         '<div class="plupload_wrapper plupload_scroll motqn-uploader">' +
                                 '<div id="' + id + '_container" class="plupload_container">' +
-                                        '<div class="plupload motqn-uploader__grid">' +
-                                                '<div class="motqn-uploader__main">' +
-                                                        '<div class="motqn-uploader__header">' +
-                                                                '<div class="motqn-uploader__intro">' +
-                                                                        '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
-                                                                        '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
-                                                                '</div>' +
-                                                                '<div class="motqn-uploader__buttons">' +
-                                                                        '<div class="plupload_buttons">' +
-                                                                                '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
-                                                                                '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
-                                                                        '</div>' +
-                                                                        '<span class="plupload_upload_status"></span>' +
-                                                                '</div>' +
+                                        '<div class="plupload motqn-uploader__content">' +
+                                                '<div class="motqn-uploader__header">' +
+                                                        '<div class="motqn-uploader__intro">' +
+                                                                '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
+                                                                '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
                                                         '</div>' +
-                                                        '<div class="plupload_progress motqn-progress">' +
-                                                                '<div class="plupload_progress_container">' +
-                                                                        '<div class="plupload_progress_bar"></div>' +
+                                                        '<div class="motqn-uploader__buttons">' +
+                                                                '<div class="plupload_buttons">' +
+                                                                        '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
+                                                                        '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
                                                                 '</div>' +
-                                                        '</div>' +
-                                                        '<div class="motqn-uploader__dropzone" id="' + id + '_dropzone">' +
-                                                                '<div class="motqn-uploader__dropzone-message">' + _('Drag & drop files here or use the button above.') + '</div>' +
-                                                                '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
+                                                                '<span class="plupload_upload_status"></span>' +
                                                         '</div>' +
                                                 '</div>' +
-                                                '<aside class="motqn-summary">' +
-                                                        '<div class="motqn-summary__card">' +
-                                                                '<h3 class="motqn-summary__title">' + _('Charge Details') + '</h3>' +
-                                                                '<dl class="motqn-summary__list">' +
-                                                                        '<div class="motqn-summary__item">' +
-                                                                                '<dt>' + _('Total Price') + '</dt>' +
-                                                                                '<dd><span class="plupload_total_price">&nbsp;</span></dd>' +
-                                                                        '</div>' +
-                                                                        '<div class="motqn-summary__item">' +
-                                                                                '<dt>' + _('Upload Progress') + '</dt>' +
-                                                                                '<dd><span class="plupload_total_status">0%</span></dd>' +
-                                                                        '</div>' +
-                                                                        '<div class="motqn-summary__item">' +
-                                                                                '<dt>' + _('Total Size') + '</dt>' +
-                                                                                '<dd><span class="plupload_total_file_size">0 b</span></dd>' +
-                                                                        '</div>' +
-                                                                '</dl>' +
-                                                                '<div class="motqn-summary__actions">' +
-                                                                        '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
-                                                                        '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
-                                                                '</div>' +
+                                                '<div class="plupload_progress motqn-progress">' +
+                                                        '<div class="plupload_progress_container">' +
+                                                                '<div class="plupload_progress_bar"></div>' +
                                                         '</div>' +
-                                                '</aside>' +
+                                                        '<div class="motqn-progress__meta">' +
+                                                                '<span class="motqn-progress__item"><strong>' + _('Upload Progress') + '</strong> <span class="plupload_total_status">0%</span></span>' +
+                                                                '<span class="motqn-progress__item"><strong>' + _('Total Size') + '</strong> <span class="plupload_total_file_size">0 b</span></span>' +
+                                                                '<span class="motqn-progress__item motqn-progress__item--price"><strong>' + _('Total Price') + '</strong> <span class="plupload_total_price">&nbsp;</span></span>' +
+                                                        '</div>' +
+                                                '</div>' +
+                                                '<div class="motqn-uploader__dropzone" id="' + id + '_dropzone">' +
+                                                        '<div class="motqn-uploader__dropzone-message">' + _('Drag & drop files here or use the button above.') + '</div>' +
+                                                        '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
+                                                '</div>' +
                                         '</div>' +
                                 '</div>' +
                                 '<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
