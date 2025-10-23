@@ -29,13 +29,29 @@ function motqn_3dprint_dequeue_default_ui() {
         if ( has_shortcode( $post_content, '3dprint' ) && strpos( $post_content, 'mode="bulk"' ) !== false ) {
 
             // --- Dequeue and Deregister the Default Script ---
-            $script_handle = 'jquery.plupload.queue.js'; 
+            $script_handle = 'jquery.plupload.queue.js';
             if ( wp_script_is( $script_handle, 'enqueued' ) ) {
                 wp_dequeue_script( $script_handle );
                 wp_deregister_script( $script_handle );
-                // error_log("MOTQN 3DPrint Debug: Dequeued script: " . $script_handle); 
+                // error_log("MOTQN 3DPrint Debug: Dequeued script: " . $script_handle);
             } else {
                 // error_log("MOTQN 3DPrint Debug: Script not found or already dequeued: " . $script_handle);
+            }
+
+            // Remove the original bulk front-end controller so our customised version can take over.
+            $bulk_script_handles = array(
+                '3dprint-frontend-bulk',
+                '3dprint-frontend-bulk.js',
+                '3dprint-frontend-bulk-js',
+                'p3d-frontend-bulk'
+            );
+
+            foreach ( $bulk_script_handles as $bulk_handle ) {
+                if ( wp_script_is( $bulk_handle, 'enqueued' ) ) {
+                    wp_dequeue_script( $bulk_handle );
+                    wp_deregister_script( $bulk_handle );
+                    // error_log("MOTQN 3DPrint Debug: Dequeued script: " . $bulk_handle);
+                }
             }
 
             // --- Dequeue and Deregister the Default Stylesheet ---
@@ -82,6 +98,14 @@ function motqn_enqueue_custom_uploader_assets() {
                 array('jquery', $core_plupload_handle), // Dependencies
                 $plugin_version, // Use plugin version for cache busting
                 true // Load in footer
+            );
+
+            wp_enqueue_script(
+                'motqn-custom-3d-print-frontend-bulk',
+                plugin_dir_url( __FILE__ ) . 'js/motqn-custom-3d-print-frontend-bulk.js',
+                array( 'jquery', 'motqn-custom-uploader-js' ),
+                $plugin_version,
+                true
             );
 
             // --- Enqueue YOUR Custom Stylesheet ---

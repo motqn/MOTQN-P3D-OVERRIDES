@@ -1479,6 +1479,16 @@ used as it is.
                 self.updateCardPrice($card);
                 self.updateSummary($card.closest('.motqn-uploader'));
             });
+
+            $(document).on('click', '.motqn-summary__primary', function(e) {
+                var $button = $('#p3d-submit-button');
+                if ($button.length) {
+                    e.preventDefault();
+                    if (!$button.prop('disabled')) {
+                        $button.trigger('click');
+                    }
+                }
+            });
         },
 
         setupUploader: function($uploader) {
@@ -1488,7 +1498,9 @@ used as it is.
             $uploader.data('motqnPrepared', true).addClass('motqn-uploader--enhanced');
             this.ensureWorkspace($uploader);
             this.attachListObserver($uploader);
+            this.hideLegacyActions($uploader);
             this.refreshUploader($uploader);
+            $uploader.find('.motqn-summary__primary').prop('disabled', true).addClass('motqn-button--disabled');
         },
 
         ensureWorkspace: function($uploader) {
@@ -1549,6 +1561,20 @@ used as it is.
                 } else {
                     $summary.appendTo($main);
                 }
+            }
+        },
+
+        hideLegacyActions: function($uploader) {
+            var $form = $uploader.closest('form');
+            if (!$form.length) {
+                $form = $(document);
+            }
+
+            $form.find('#p3d-calculate-price-button').hide();
+
+            var $submit = $form.find('#p3d-submit-button');
+            if ($submit.length && !$submit.hasClass('motqn-hidden-submit')) {
+                $submit.addClass('motqn-hidden-submit');
             }
         },
 
@@ -1653,15 +1679,21 @@ used as it is.
             }
 
             $container.children('.motqn-file-card__status').remove();
-            var $progress = $visual.children('.motqn-file-card__status');
-            if (!$progress.length) {
-                $progress = $('<div class="motqn-file-card__status"></div>').appendTo($visual);
+            var $statusArea = $media.children('.motqn-file-card__status');
+            if (!$statusArea.length) {
+                $statusArea = $('<div class="motqn-file-card__status"></div>').appendTo($media);
             }
-            if ($status.length) {
-                $progress.append($status);
+
+            var $statusMessage = $statusArea.children('.motqn-status-message');
+            if (!$statusMessage.length) {
+                $statusMessage = $('<div class="motqn-status-message"></div>').appendTo($statusArea);
             }
-            if ($size.length) {
-                $progress.append($size);
+
+            if ($status.length && !$statusMessage.has($status).length) {
+                $statusMessage.append($status);
+            }
+            if ($size.length && !$statusMessage.has($size).length) {
+                $statusMessage.append($size);
             }
 
             $container.find('.plupload_clearer').remove();
@@ -1674,6 +1706,8 @@ used as it is.
             $container.find('table.p3d-stats-bulk').appendTo($config);
 
             this.enhanceMaterialSelectors($config);
+            this.attachStatusObserver($card);
+            this.updateCardStatus($card);
             this.attachPriceObserver($card);
             this.updateCardPrice($card);
         },
@@ -1706,6 +1740,182 @@ used as it is.
                 return 1;
             }
             return this.ensureQuantityValue($input);
+        },
+
+        attachStatusObserver: function($card) {
+            var $status = $card.find('.plupload_file_status');
+            if (!$status.length || $status.data('motqnStatusObserver')) {
+                return;
+            }
+            var self = this;
+            var observer = new MutationObserver(function() {
+                self.updateCardStatus($card);
+            });
+            observer.observe($status[0], { childList: true, subtree: true, characterData: true });
+            $status.data('motqnStatusObserver', observer);
+        },
+
+        updateCardStatus: function($card) {
+            if (!$card.length) {
+                return;
+            }
+            var $statusArea = $card.find('.motqn-file-card__status');
+            if (!$statusArea.length) {
+                return;
+            }
+
+            var $steps = this.ensureStatusSteps($card);
+            var stage = this.determineStatusStage($card);
+
+            if ($steps && $steps.length) {
+                this.updateStatusStepsState($steps, stage);
+            }
+
+            if (stage) {
+                $statusArea.attr('data-motqn-stage', stage);
+            }
+        },
+
+        ensureStatusSteps: function($card) {
+            var $statusArea = $card.find('.motqn-file-card__status');
+            if (!$statusArea.length) {
+                return $();
+            }
+
+            var $steps = $statusArea.children('.motqn-status-steps');
+            if ($steps.length) {
+                return $steps;
+            }
+
+            var labels = this.getStatusStepLabels();
+            $steps = $('<div class="motqn-status-steps"></div>');
+
+            labels.forEach(function(step, index) {
+                var $step = $('<div class="motqn-status-step" data-step="' + step.key + '">' +
+                    '<span class="motqn-status-step__index">' + (index + 1) + '</span>' +
+                    '<span class="motqn-status-step__label">' + step.label + '</span>' +
+                '</div>');
+                $steps.append($step);
+            });
+
+            $statusArea.prepend($steps);
+            return $steps;
+        },
+
+        updateStatusStepsState: function($steps, stage) {
+            if (!$steps || !$steps.length) {
+                return;
+            }
+
+            var stageName = stage || 'upload';
+            var attrStage = stageName === 'analysis' ? 'analyse' : stageName;
+            var activeIndex = 0;
+            var isError = typeof stageName === 'string' && stageName.indexOf('error') === 0;
+            var isRepair = stageName === 'repair';
+
+            switch (stageName) {
+                case 'analyse':
+                case 'analysis':
+                    activeIndex = 1;
+                    break;
+                case 'complete':
+                    activeIndex = 2;
+                    break;
+                case 'error-analysis':
+                    activeIndex = 1;
+                    break;
+                default:
+                    activeIndex = 0;
+            }
+
+            $steps.find('.motqn-status-step').each(function(index) {
+                var $step = $(this);
+                $step.removeClass('motqn-status-step--completed motqn-status-step--active motqn-status-step--error motqn-status-step--repair');
+
+                if (isError) {
+                    if (index < activeIndex) {
+                        $step.addClass('motqn-status-step--completed');
+                    }
+                    if (index === activeIndex) {
+                        $step.addClass('motqn-status-step--active motqn-status-step--error');
+                        if (stageName === 'error-repair' && index === 0) {
+                            $step.addClass('motqn-status-step--repair');
+                        }
+                    }
+                    return;
+                }
+
+                if (index < activeIndex) {
+                    $step.addClass('motqn-status-step--completed');
+                } else if (index === activeIndex) {
+                    $step.addClass('motqn-status-step--active');
+                    if (isRepair && index === 0) {
+                        $step.addClass('motqn-status-step--repair');
+                    }
+                }
+            });
+
+            $steps.attr('data-motqn-status', attrStage);
+        },
+
+        determineStatusStage: function($card) {
+            if (!$card.length) {
+                return 'upload';
+            }
+
+            var id = $card.attr('id');
+            if (window.p3d && p3d.analyse_queue && id && p3d.analyse_queue[id]) {
+                var file = p3d.analyse_queue[id];
+                var repairStatus = (typeof file.repair_status === 'undefined') ? 1 : parseInt(file.repair_status, 10);
+                var analyseStatus = (typeof file.analyse_status === 'undefined') ? 0 : parseInt(file.analyse_status, 10);
+                if (repairStatus === -1) {
+                    return 'error-repair';
+                }
+
+                if (analyseStatus === -1 || file.fatal_error) {
+                    return 'error-analysis';
+                }
+
+                if (analyseStatus === 1) {
+                    return 'complete';
+                }
+
+                if (repairStatus !== 1 && (p3d.api_repair === 'on' || p3d.server_triangulation === 'on' || file.triangulation_required)) {
+                    return 'repair';
+                }
+
+                if (analyseStatus === 2) {
+                    return 'analyse';
+                }
+
+                if ((file.uploaded || $card.hasClass('plupload_done')) && analyseStatus === 0) {
+                    return 'analyse';
+                }
+            }
+
+            if ($card.hasClass('plupload_failed')) {
+                return 'error';
+            }
+
+            if ($card.hasClass('plupload_done')) {
+                return 'analyse';
+            }
+
+            return 'upload';
+        },
+
+        getStatusStepLabels: function() {
+            if (this._statusStepCache) {
+                return this._statusStepCache;
+            }
+
+            this._statusStepCache = [
+                { key: 'upload', label: this.translate('Upload') },
+                { key: 'analyse', label: this.translate('Analysis') },
+                { key: 'complete', label: this.translate('Ready') }
+            ];
+
+            return this._statusStepCache;
         },
 
         attachPriceObserver: function($card) {
