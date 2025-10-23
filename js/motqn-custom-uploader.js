@@ -103,6 +103,12 @@ used as it is.
                         return 'error';
                 }
 
+                if (trimmed.indexOf('upload complete') !== -1 ||
+                        (trimmed.indexOf('uploaded') !== -1 && trimmed.indexOf('uploading') === -1) ||
+                        (trimmed.indexOf('upload') !== -1 && trimmed.indexOf('100%') !== -1)) {
+                        return 'complete';
+                }
+
                 if (trimmed.indexOf('analys') !== -1 || trimmed.indexOf('analyz') !== -1 || trimmed.indexOf('pricing') !== -1) {
                         return 'analysis';
                 }
@@ -137,7 +143,11 @@ used as it is.
                 var stage = motqnDetectStageFromMessage(message);
                 var prefix = '';
 
-                if (stage === 'upload' || stage === 'repair') {
+                if (stage === 'complete' && ((/upload/.test(trimmed) && /100%/.test(trimmed)) || trimmed.indexOf('uploaded') !== -1)) {
+                        trimmed = 'Upload complete';
+                }
+
+                if (stage === 'upload' || stage === 'repair' || stage === 'complete') {
                         prefix = 'Step 1 · ';
                 } else if (stage === 'analysis') {
                         prefix = 'Step 2 · ';
@@ -461,9 +471,9 @@ used as it is.
 
 						var html_price = file.price;
 
-						if (file.percent==99 && file.status==5) {
-							file.percent = 100;
-						}
+                                                if (file.percent === 99 && file.status === plupload.DONE) {
+                                                        file.percent = 100;
+                                                }
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
@@ -870,9 +880,9 @@ used as it is.
 
 				uploader.bind("UploadProgress", function(up, file) {
 					// Set file specific progress
-					if (file.percent==100 && file.status!=5) {
-						file.percent = 99;
-					}
+                                        if (file.percent === 100 && file.status !== plupload.DONE) {
+                                                file.percent = 99;
+                                        }
 					$('#' + file.id + ' div.plupload_file_status', target).html('Uploading '+file.percent + '%'); //todo text_uploading
 //					$('#' + file.id + ' div.plupload_file_price', target).html(file.percent + '%'); //todo ajax image
 
@@ -1220,9 +1230,9 @@ used as it is.
 
 						var html_price = file.price;
 
-						if (file.percent==99 && file.status==5) {
-							file.percent = 100;
-						}
+                                               if (file.percent === 99 && file.status === plupload.DONE) {
+                                                        file.percent = 100;
+                                                }
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
@@ -1629,9 +1639,9 @@ used as it is.
 
 				uploader.bind("UploadProgress", function(up, file) {
 					// Set file specific progress
-					if (file.percent==100 && file.status!=5) {
-						file.percent = 99;
-					}
+                                        if (file.percent === 100 && file.status !== plupload.DONE) {
+                                                file.percent = 99;
+                                        }
 					$('#' + file.id + ' div.plupload_file_status', target).html('Uploading '+file.percent + '%'); //todo text_uploading
 //					$('#' + file.id + ' div.plupload_file_price', target).html(file.percent + '%'); //todo ajax image
 
