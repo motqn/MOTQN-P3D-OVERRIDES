@@ -101,13 +101,6 @@ used as it is.
                                                                         '<h2 class="motqn-uploader__title">' + _('Upload 3D Files') + '</h2>' +
                                                                         '<p class="motqn-uploader__subtitle">' + p3d.text_bulk_plupload_header_text + '</p>' +
                                                                 '</div>' +
-                                                                '<div class="motqn-uploader__buttons">' +
-                                                                        '<div class="plupload_buttons">' +
-                                                                                '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
-                                                                                '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
-                                                                        '</div>' +
-                                                                        '<span class="plupload_upload_status"></span>' +
-                                                                '</div>' +
                                                         '</div>' +
                                                         '<div class="plupload_progress motqn-progress">' +
                                                                 '<div class="plupload_progress_container">' +
@@ -115,7 +108,17 @@ used as it is.
                                                                 '</div>' +
                                                         '</div>' +
                                                         '<div class="motqn-uploader__dropzone" id="' + id + '_dropzone">' +
-                                                                '<div class="motqn-uploader__dropzone-message">' + _('Drag & drop files here or use the button above.') + '</div>' +
+                                                                '<div class="motqn-uploader__dropzone-message">' +
+                                                                        '<div class="motqn-uploader__dropzone-icon" aria-hidden="true"></div>' +
+                                                                        '<p class="motqn-uploader__dropzone-text">' + _('Drag & drop files here or click below to browse.') + '</p>' +
+                                                                        '<div class="motqn-uploader__dropzone-actions">' +
+                                                                                '<div class="plupload_buttons">' +
+                                                                                        '<a href="#" class="plupload_button plupload_add motqn-button motqn-button--primary" id="' + id + '_browse">' + _('Add 3D Files') + '</a>' +
+                                                                                        '<a href="#" style="display:none;" class="plupload_button plupload_start motqn-button motqn-button--ghost">' + _('Start Upload') + '</a>' +
+                                                                                '</div>' +
+                                                                                '<span class="plupload_upload_status"></span>' +
+                                                                        '</div>' +
+                                                                '</div>' +
                                                                 '<ul id="' + id + '_filelist" class="plupload_filelist motqn-card-list"></ul>' +
                                                         '</div>' +
                                                 '</div>' +
