@@ -411,7 +411,10 @@ jQuery(function() {
                 UploadComplete: function(p3d_uploader, files) {
 
 			if (p3d.api_repair!='on' && p3d.server_triangulation=='on') { //need to force repair for obj models
-				jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+				jQuery.each(p3d.analyse_queue, function(index, value) {
+					if (!value) {
+						return;
+					}
 					var file_id = value.id;
 					if (typeof(p3d.analyse_queue[file_id].triangulation_required) != 'undefined' && p3d.analyse_queue[file_id].triangulation_required == true) {
 						p3d.analyse_queue[file_id].repair_status = 0;
@@ -425,7 +428,10 @@ jQuery(function() {
 				p3dRepairModelsBulk();
 			}
 			else if (p3d.api_repair=='on' || p3d.api_optimize=='on' || p3d.api_render=='on') {
-				jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+				jQuery.each(p3d.analyse_queue, function(index, value) {
+					if (!value) {
+						return;
+					}
 					var status = 0;
 					var file_id = value.id;
 					if (typeof(p3d.analyse_queue[file_id].repair_status) == 'undefined') {
@@ -1138,7 +1144,10 @@ function p3dRepairCheckBulk (filename, server, obj) {
 }
 function p3dRepairModelsBulk() {
 	var any_to_repair = false;
-	jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+	jQuery.each(p3d.analyse_queue, function(index, value) {
+		if (!value) {
+			return;
+		}
 		var status = 0;
 		var file_id = value.id;
 		if (p3d.analyse_queue[file_id].repair_status == 0) {
@@ -1186,7 +1195,10 @@ function p3dAnalyseModelsBulk() {
         });
 
         p3d.analyse_ajax_interval_bulk = setInterval(function(){
-                jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+                jQuery.each(p3d.analyse_queue, function(index, value) {
+                	if (!value) {
+                		return;
+                	}
                         var status = 0;
                         var file_id = value.id;
                         if (typeof(value.analyse_status)!='undefined') {
@@ -1211,7 +1223,10 @@ function p3dAnalyseModelsBulk() {
 
 		});
 
-		jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+		jQuery.each(p3d.analyse_queue, function(index, value) {
+			if (!value) {
+				return;
+			}
 			
 			if (typeof(value.analyse_status)!='undefined') {
 
@@ -1771,7 +1786,10 @@ function p3dSubmitFormBulk() {
 	var the_form = '<form action="" method="post">';
 	the_form += '<input type="hidden" name="p3d_action" value="bulk_submit">';
 	
-	jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+	jQuery.each(p3d.analyse_queue, function(index, value) {
+		if (!value) {
+			return;
+		}
 		var file_id = value.id;
 		var obj = jQuery('li#'+file_id);
 		var printer_id = jQuery(obj).find('select[name=product_printer]').val()
