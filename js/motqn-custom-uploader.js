@@ -163,8 +163,10 @@ used as it is.
 					target.attr('id', id);
 				}
 
-				contents_bak = target.html();
-				renderUI(id, target);
+                                contents_bak = target.html();
+                                renderUI(id, target);
+
+                                $('div.plupload_progress', target).hide();
 
 				settings = $.extend({
 					dragdrop : true,
@@ -652,11 +654,12 @@ used as it is.
 				uploader.init();
 
 				uploader.bind('StateChanged', function() {
-					if (uploader.state === plupload.STARTED) {
-						$('li.plupload_delete a,div.plupload_buttons', target).hide();
-						uploader.disableBrowse(true);
+                                        if (uploader.state === plupload.STARTED) {
+                                                $('li.plupload_delete a,div.plupload_buttons', target).hide();
+                                                uploader.disableBrowse(true);
 
-						$('span.plupload_upload_status,div.plupload_progress,a.plupload_stop', target).css('display', 'inline-block');
+                                                $('span.plupload_upload_status,a.plupload_stop', target).css('display', 'inline-block');
+                                                $('div.plupload_progress', target).css('display', 'block');
 						$('span.plupload_upload_status', target).html('Uploaded ' + uploader.total.uploaded + '/' + uploader.files.length + ' files');
 
 						if (settings.multiple_queues) {
