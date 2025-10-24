@@ -77,9 +77,334 @@ used as it is.
 	var uploaders = {};
 	var analyse_queue = {};
 
-	function _(str) {
-		return plupload.translate(str) || str;
-	}
+        function _(str) {
+                return plupload.translate(str) || str;
+        }
+
+        function motqnTranslate(text) {
+                if (typeof text === 'undefined' || text === null) {
+                        return '';
+                }
+
+                if (typeof plupload !== 'undefined' && typeof plupload.translate === 'function') {
+                        var translated = plupload.translate(text);
+                        if (translated) {
+                                return translated;
+                        }
+                }
+
+                return text;
+        }
+
+        function motqnSlugify(label) {
+                if (typeof label !== 'string') {
+                        return '';
+                }
+
+                var slug = label.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+                if (!slug.length) {
+                        slug = 'group';
+                }
+
+                return slug;
+        }
+
+        function motqnNormalizeColorHex(color) {
+                if (!color && color !== 0) {
+                        return '';
+                }
+
+                var hex = ('' + color).trim();
+
+                if (!hex.length) {
+                        return '';
+                }
+
+                if (hex.indexOf('#') !== 0) {
+                        if (/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(hex)) {
+                                hex = '#' + hex;
+                        }
+                }
+
+                if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(hex)) {
+                        return '';
+                }
+
+                if (hex.length === 4) {
+                        hex = '#' + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2) + hex.charAt(3) + hex.charAt(3);
+                }
+
+                return hex;
+        }
+
+        function motqnEnhanceMaterialPicker($context) {
+                var $select = $context.find('select[name=product_filament]').first();
+
+                if (!$select.length || $select.data('motqnMaterialPickerInitialized')) {
+                        return;
+                }
+
+                var materialGroups = [];
+                var groupLookup = {};
+                var placeholderText = '';
+                var groupIndex = 0;
+
+                var colorLabelText = (typeof window !== 'undefined' && window.p3d && (p3d.text_bulk_color || p3d.text_bulk_colour || p3d.text_color || p3d.text_colour)) || motqnTranslate('Color');
+                var groupPlaceholderText = (typeof window !== 'undefined' && window.p3d && (p3d.text_material_group || p3d.text_bulk_material_group)) || motqnTranslate('Select material group');
+                var colorPromptText = (typeof window !== 'undefined' && window.p3d && (p3d.text_select_color || p3d.text_select_colour)) || motqnTranslate('Choose a color to continue');
+                var selectGroupMessage = motqnTranslate('Select a material group to view colors');
+                var allUnavailableText = motqnTranslate('All colors are unavailable for the current configuration');
+                var noColorsText = motqnTranslate('No colors available');
+
+                $select.children('option').each(function() {
+                        var $option = jQuery(this);
+                        if (!$option.val() && !placeholderText.length) {
+                                placeholderText = jQuery.trim($option.text());
+                        }
+                });
+
+                $select.children().each(function() {
+                        var $child = jQuery(this);
+                        if ($child.is('optgroup')) {
+                                var rawLabel = $child.attr('label') || $child.data('label') || '';
+                                var label = jQuery.trim(rawLabel);
+                                var keyBase = motqnSlugify(label);
+
+                                if (!keyBase.length) {
+                                        keyBase = 'group';
+                                }
+
+                                var key = keyBase;
+                                while (groupLookup[key]) {
+                                        groupIndex += 1;
+                                        key = keyBase + '-' + groupIndex;
+                                }
+
+                                var options = [];
+                                $child.children('option').each(function() {
+                                        var $opt = jQuery(this);
+                                        var value = $opt.val();
+
+                                        if (!value) {
+                                                return;
+                                        }
+
+                                        options.push({
+                                                value: value,
+                                                label: jQuery.trim($opt.text()),
+                                                color: motqnNormalizeColorHex($opt.data('color') || $opt.data('colour') || $opt.data('hex') || $opt.attr('data-color') || $opt.attr('data-colour') || $opt.attr('data-hex')),
+                                                option: $opt
+                                        });
+                                });
+
+                                if (options.length) {
+                                        var groupData = {
+                                                key: key,
+                                                label: label || motqnTranslate('Material group'),
+                                                options: options
+                                        };
+
+                                        materialGroups.push(groupData);
+                                        groupLookup[key] = groupData;
+                                }
+                        }
+                        else if ($child.is('option')) {
+                                var $single = $child;
+                                var valueSingle = $single.val();
+
+                                if (!valueSingle) {
+                                        return;
+                                }
+
+                                if (!groupLookup._motqnUngrouped) {
+                                        groupLookup._motqnUngrouped = {
+                                                key: '_motqnUngrouped',
+                                                label: motqnTranslate('Other materials'),
+                                                options: []
+                                        };
+                                        materialGroups.push(groupLookup._motqnUngrouped);
+                                }
+
+                                groupLookup._motqnUngrouped.options.push({
+                                        value: valueSingle,
+                                        label: jQuery.trim($single.text()),
+                                        color: motqnNormalizeColorHex($single.data('color') || $single.data('colour') || $single.data('hex') || $single.attr('data-color') || $single.attr('data-colour') || $single.attr('data-hex')),
+                                        option: $single
+                                });
+                        }
+                });
+
+                if (!materialGroups.length) {
+                        return;
+                }
+
+                $select.data('motqnMaterialPickerInitialized', true);
+                $select.addClass('motqn-material-picker__select').attr('aria-hidden', 'true').attr('tabindex', '-1');
+
+                var $materialCell = $select.closest('td');
+
+                if (!$materialCell.length) {
+                        return;
+                }
+
+                var $groupWrapper = jQuery('<div class="motqn-material-picker"></div>');
+                var $groupSelect = jQuery('<select class="p3d-dropdown-searchable-bulk motqn-material-picker__group"></select>');
+
+                if (placeholderText.length) {
+                        $groupSelect.append('<option value="">' + placeholderText + '</option>');
+                }
+                else {
+                        $groupSelect.append('<option value="">' + groupPlaceholderText + '</option>');
+                }
+
+                for (var gi = 0; gi < materialGroups.length; gi++) {
+                        var group = materialGroups[gi];
+                        $groupSelect.append('<option value="' + group.key + '">' + group.label + '</option>');
+                }
+
+                $groupWrapper.append($groupSelect);
+
+                var $materialRow = $materialCell.closest('tr');
+                var $colorsRow = $materialRow.next('.motqn-material-picker__colors-row');
+
+                if (!$colorsRow.length) {
+                        $colorsRow = jQuery('<tr class="motqn-material-picker__colors-row"><td>' + colorLabelText + '</td><td></td></tr>');
+                        $materialRow.after($colorsRow);
+                }
+                else {
+                        $colorsRow.find('td').first().text(colorLabelText);
+                }
+
+                var $colorsContainer = jQuery('<div class="motqn-material-picker__colors"></div>');
+                $colorsRow.find('td').last().empty().append($colorsContainer);
+
+                $select.after($groupWrapper);
+
+                var isSyncing = false;
+
+                function renderColorsForGroup(groupKey, selectedValue) {
+                        $colorsContainer.empty();
+
+                        if (!groupKey || !groupLookup[groupKey]) {
+                                $colorsContainer.append('<p class="motqn-material-picker__message">' + selectGroupMessage + '</p>');
+                                return;
+                        }
+
+                        var groupData = groupLookup[groupKey];
+                        var hasEnabled = false;
+
+                        for (var oi = 0; oi < groupData.options.length; oi++) {
+                                (function(optionData) {
+                                        var optionDisabled = optionData.option.prop('disabled');
+                                        var optionSelected = selectedValue === optionData.value;
+                                        var $chip = jQuery('<button type="button" class="motqn-material-chip"></button>');
+
+                                        $chip.attr('data-value', optionData.value);
+                                        $chip.attr('data-group', groupKey);
+                                        $chip.attr('title', optionData.label);
+                                        $chip.attr('aria-pressed', optionSelected ? 'true' : 'false');
+
+                                        if (optionData.color) {
+                                                $chip.css('--motqn-chip-color', optionData.color);
+                                                $chip.attr('data-color', optionData.color);
+                                        }
+
+                                        $chip.append('<span class="motqn-material-chip__swatch" aria-hidden="true"></span>');
+                                        $chip.append('<span class="motqn-material-chip__label">' + optionData.label + '</span>');
+
+                                        if (optionDisabled) {
+                                                $chip.addClass('is-disabled').prop('disabled', true).attr('aria-disabled', 'true');
+                                        }
+                                        else {
+                                                hasEnabled = true;
+                                        }
+
+                                        if (optionSelected) {
+                                                $chip.addClass('is-selected');
+                                        }
+
+                                        $chip.on('click', function() {
+                                                if (jQuery(this).hasClass('is-disabled')) {
+                                                        return;
+                                                }
+
+                                                isSyncing = true;
+                                                $select.val(optionData.value);
+                                                $select.trigger('change');
+                                                isSyncing = false;
+                                        });
+
+                                        $colorsContainer.append($chip);
+                                })(groupData.options[oi]);
+                        }
+
+                        if (!groupData.options.length) {
+                                $colorsContainer.append('<p class="motqn-material-picker__message">' + noColorsText + '</p>');
+                        }
+                        else if (!hasEnabled) {
+                                $colorsContainer.append('<p class="motqn-material-picker__message">' + allUnavailableText + '</p>');
+                        }
+                        else if (!selectedValue || !groupData.options.some(function(entry) { return entry.value === selectedValue; })) {
+                                $colorsContainer.append('<p class="motqn-material-picker__message">' + colorPromptText + '</p>');
+                        }
+                }
+
+                function syncFromOriginal() {
+                        if (isSyncing) {
+                                return;
+                        }
+
+                        var currentValue = $select.val();
+                        var matchedGroupKey = '';
+
+                        for (var si = 0; si < materialGroups.length; si++) {
+                                var groupData = materialGroups[si];
+
+                                for (var sj = 0; sj < groupData.options.length; sj++) {
+                                        if (groupData.options[sj].value === currentValue) {
+                                                matchedGroupKey = groupData.key;
+                                                break;
+                                        }
+                                }
+
+                                if (matchedGroupKey) {
+                                        break;
+                                }
+                        }
+
+                        if (matchedGroupKey) {
+                                if ($groupSelect.val() !== matchedGroupKey) {
+                                        $groupSelect.val(matchedGroupKey);
+                                }
+
+                                renderColorsForGroup(matchedGroupKey, currentValue);
+                        }
+                        else {
+                                $groupSelect.val('');
+                                renderColorsForGroup('', currentValue);
+                        }
+                }
+
+                $groupSelect.on('change', function() {
+                        var selectedGroup = jQuery(this).val();
+                        renderColorsForGroup(selectedGroup, $select.val());
+                });
+
+                $select.on('change.motqnMaterialPicker', function() {
+                        syncFromOriginal();
+                });
+
+                if (typeof MutationObserver !== 'undefined') {
+                        var observer = new MutationObserver(function() {
+                                renderColorsForGroup($groupSelect.val(), $select.val());
+                        });
+
+                        observer.observe($select[0], { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled'] });
+                }
+
+                syncFromOriginal();
+        }
 
         function renderUI(id, target) {
                 // Remove all existing non plupload items
@@ -463,10 +788,13 @@ used as it is.
 									html_stats+
 									'</div>'+
 								'</div>'+
-							'</div>'
-						);
+                                                        '</div>'
+                                                );
 
-						window.wp.event_manager.doAction( '3dprint.fileList_appended');
+                                                var $newListItem = $('#' + file.id, fileList);
+                                                motqnEnhanceMaterialPicker($newListItem);
+
+                                                window.wp.event_manager.doAction( '3dprint.fileList_appended');
 
 						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
 							if (typeof(p3d.analyse_queue[file.id].material_id)!='undefined') {
