@@ -94,7 +94,7 @@ function motqn_enqueue_custom_uploader_assets() {
 
             wp_enqueue_script(
                 'motqn-custom-uploader-js', // Unique handle for your script
-                plugin_dir_url( __FILE__ ) . 'js/motqn-custom-uploader.js', // Path to your JS file
+                plugin_dir_url( __FILE__ ) . 'js/motqn-jquery.plupload.queue.js', // Path to your JS file
                 array('jquery', $core_plupload_handle), // Dependencies
                 $plugin_version, // Use plugin version for cache busting
                 true // Load in footer
@@ -102,7 +102,7 @@ function motqn_enqueue_custom_uploader_assets() {
 
             wp_enqueue_script(
                 'motqn-custom-3d-print-frontend-bulk',
-                plugin_dir_url( __FILE__ ) . 'js/motqn-custom-3d-print-frontend-bulk.js',
+                plugin_dir_url( __FILE__ ) . 'js/motqn-3d-print-frontend-bulk.js',
                 array( 'jquery', 'motqn-custom-uploader-js' ),
                 $plugin_version,
                 true
@@ -111,7 +111,7 @@ function motqn_enqueue_custom_uploader_assets() {
             // --- Enqueue YOUR Custom Stylesheet ---
             wp_enqueue_style(
                 'motqn-custom-uploader-css', // Unique handle for your style
-                plugin_dir_url( __FILE__ ) . 'css/motqn-custom-uploader.css', // Path to your CSS file
+                plugin_dir_url( __FILE__ ) . 'css/motqn-jquery.plupload.queue.css', // Path to your CSS file
                 array(), // Dependencies (if any)
                 $plugin_version // Use plugin version
             );
