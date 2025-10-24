@@ -934,6 +934,7 @@ used as it is.
                                                                                 '<div class="plupload_file_meta">' +
                                                                                         '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
                                                                                         '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                                        '<div class="plupload_file_model-info">' + html_stats + '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                         '<div class="motqn-file-card__details">' +

@@ -429,6 +429,75 @@
     gap: 12px;
 }
 
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border-radius: 14px;
+    background: rgba(148, 163, 184, 0.12);
+    color: #0f172a;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info::before {
+    content: "Model Info";
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    color: rgba(15, 23, 42, 0.55);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info .p3d-stats-thumbnail {
+    text-align: center;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info .p3d-stats-thumbnail img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info table.p3d-stats {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    margin: 0;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info table.p3d-stats tr + tr td {
+    border-top: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info table.p3d-stats td {
+    padding: 8px 0;
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.85);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info table.p3d-stats td:first-child {
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info table.p3d-stats td:last-child {
+    text-align: right;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_model-info p {
+    margin: 0;
+    color: rgba(15, 23, 42, 0.75);
+}
+
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_status::before,
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_size::before {
     text-transform: uppercase;
