@@ -126,7 +126,7 @@ used as it is.
                                                                 '<dl class="motqn-summary__list">' +
                                                                         '<div class="motqn-summary__item">' +
                                                                                 '<dt>' + _('Total Price') + '</dt>' +
-                                                                                '<dd><span class="plupload_total_price">&nbsp;</span></dd>' +
+                                                                                '<dd><span class="plupload_total_price">—</span></dd>' +
                                                                         '</div>' +
                                                                         '<div class="motqn-summary__item">' +
                                                                                 '<dt>' + _('Upload Progress') + '</dt>' +
@@ -150,7 +150,55 @@ used as it is.
                 );
         }
 
-	$.fn.pluploadQueue = function(settings) {
+        function resolvePreviewUrl(file) {
+                var queueItem = null;
+
+                if (typeof window.p3d !== 'undefined' && window.p3d && window.p3d.analyse_queue) {
+                        queueItem = window.p3d.analyse_queue[file.id];
+                }
+
+                var candidates = [];
+
+                if (queueItem) {
+                        candidates.push(queueItem.thumbnail_url, queueItem.thumbnail, queueItem.preview_url, queueItem.rendered_file_url);
+                }
+
+                candidates.push(
+                        file.thumbnail_url,
+                        file.thumbnail,
+                        file.preview_url,
+                        file.preview,
+                        file.image_url,
+                        file.image,
+                        file.thumb
+                );
+
+                for (var i = 0; i < candidates.length; i++) {
+                        var value = candidates[i];
+
+                        if (typeof value === 'string') {
+                                value = $.trim(value);
+                        }
+
+                        if (value) {
+                                if (queueItem) {
+                                        queueItem.thumbnail_url = value;
+                                }
+
+                                return value;
+                        }
+                }
+
+                return '';
+        }
+
+        function notifySummaryUpdate() {
+                if (typeof window.motqnUpdateSummaryTotals === 'function') {
+                        window.motqnUpdateSummaryTotals();
+                }
+        }
+
+        $.fn.pluploadQueue = function(settings) {
 		if (settings) {
 			this.each(function() {
 				var uploader, target, id, contents_bak;
@@ -165,6 +213,7 @@ used as it is.
 
                                 contents_bak = target.html();
                                 renderUI(id, target);
+                                notifySummaryUpdate();
 
                                 $('div.plupload_progress', target).hide();
 
@@ -345,9 +394,9 @@ used as it is.
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
-						var html_stats = 'Click Calculate button to show stats';
-						var stats_style = '';
-						var html_thumb = '';
+                                                var html_stats = 'Click Calculate button to show stats';
+                                                var stats_style = '';
+                                                var thumbnailUrl = '';
 
                                             if (typeof(p3d.analyse_queue[file.id])!='undefined') {
 							if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
@@ -360,14 +409,29 @@ used as it is.
 								html_stats = p3d.analyse_queue[file.id].html_stats;
 								stats_style = 'visibility:visible;';
 							}
-							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
-								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
-							}
+                                                        if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined' && p3d.analyse_queue[file.id].thumbnail_url) {
+                                                                thumbnailUrl = p3d.analyse_queue[file.id].thumbnail_url;
+                                                        }
 
-								
-						}
+
+                                                }
+                                            if (!thumbnailUrl) {
+                                                    thumbnailUrl = resolvePreviewUrl(file);
+                                            }
+
+                                            if (thumbnailUrl && typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                    p3d.analyse_queue[file.id].thumbnail_url = thumbnailUrl;
+                                            }
+
                                             var placeholder_text = file_extension_label || '3D';
-                                            var preview_markup = html_thumb ? html_thumb : '<span class="motqn-file-card__thumb-placeholder" aria-hidden="true">' + placeholder_text + '</span>';
+                                            var preview_markup;
+
+                                            if (thumbnailUrl) {
+                                                    var encodedThumbnailUrl = plupload.xmlEncode(thumbnailUrl);
+                                                    preview_markup = '<a class="motqn-file-card__preview-link" target="_blank" href="' + encodedThumbnailUrl + '"><img class="plupload_model_image" src="' + encodedThumbnailUrl + '" alt="" /></a>';
+                                            } else {
+                                                    preview_markup = '<span class="motqn-file-card__thumb-placeholder" aria-hidden="true">' + placeholder_text + '</span>';
+                                            }
 
                                             fileList.append(
                                                         '<li class="p3d-filelist-item" id="' + file.id + '">' +
@@ -546,12 +610,13 @@ used as it is.
 //						if ()
 //						p3dSelectFilamentBulk(jQuery('input[name=product_filament]').first().data('id') || jQuery('select[name=product_filament]').val());
 
-						$('#' + file.id + '.plupload_delete').find('.plupload_file_action a.p3d-file-action').click(function(e) {
-							$('#' + file.id).remove();
-							uploader.removeFile(file);
+                                                $('#' + file.id + '.plupload_delete').find('.plupload_file_action a.p3d-file-action').click(function(e) {
+                                                        $('#' + file.id).remove();
+                                                        uploader.removeFile(file);
+                                                        notifySummaryUpdate();
 
-							e.preventDefault();
-						});
+                                                        e.preventDefault();
+                                                });
 					});
 
                                         $('span.plupload_total_file_size', target).html(plupload.formatSize(uploader.total.size));
@@ -577,10 +642,12 @@ used as it is.
 					updateTotalProgress();
 
 					// Re-add drag message if there is no files
-					if (!uploader.files.length && uploader.features.dragdrop && uploader.settings.dragdrop) {
-						$('#' + id + '_filelist').append('<li class="plupload_droptext">' + _("Drag files here.") + '</li>');
-					}
-				}
+                                        if (!uploader.files.length && uploader.features.dragdrop && uploader.settings.dragdrop) {
+                                                $('#' + id + '_filelist').append('<li class="plupload_droptext">' + _("Drag files here.") + '</li>');
+                                        }
+
+                                        notifySummaryUpdate();
+                                }
 				function addToAnalyseQueue (file) {
 					analyse_queue[file.id] = file;
 //					console.log(analyse_queue);

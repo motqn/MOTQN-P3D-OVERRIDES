@@ -13,7 +13,7 @@
 
 .motqn-uploader {
     width: 100%;
-    max-width: 1280px;
+    max-width: 1400px;
     margin-inline: auto;
     border-radius: 20px;
     background: #ffffff;
@@ -713,6 +713,11 @@
     font-size: 18px;
     font-weight: 600;
     color: #ffffff;
+}
+
+.motqn-summary__value--placeholder {
+    color: rgba(226, 232, 240, 0.7);
+    font-weight: 500;
 }
 
 .motqn-summary__actions {

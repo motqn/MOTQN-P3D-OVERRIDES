@@ -12,10 +12,95 @@ p3d.image_height=5;
 p3d.image_map=1;
 
 
+function motqnSetFileThumbnail(file_id, thumbnailUrl) {
+        if (!thumbnailUrl || !file_id) {
+                return;
+        }
+
+        if (typeof window.p3d !== 'undefined' && p3d && p3d.analyse_queue) {
+                if (typeof p3d.analyse_queue[file_id] === 'undefined') {
+                        p3d.analyse_queue[file_id] = {};
+                }
+
+                p3d.analyse_queue[file_id].thumbnail_url = thumbnailUrl;
+        }
+
+        var $cardImage = jQuery('li#' + file_id + ' .plupload_file_image');
+
+        if ($cardImage.length) {
+                var encodedUrl = (typeof plupload !== 'undefined' && plupload.xmlEncode) ? plupload.xmlEncode(thumbnailUrl) : thumbnailUrl;
+                var markup = '<a target="_blank" href="' + encodedUrl + '"><img class="plupload_model_image" src="' + encodedUrl + '" alt="" /></a>';
+                $cardImage.html(markup);
+        }
+}
+
+window.motqnSetFileThumbnail = motqnSetFileThumbnail;
+
+function motqnFormatSummaryPrice(amount) {
+        if (typeof window.accounting === 'undefined') {
+                return Number(amount).toFixed(2);
+        }
+
+        var decimals = p3d.price_num_decimals < 0 ? 0 : p3d.price_num_decimals;
+        var priceValue = amount;
+
+        if (p3d.price_num_decimals < 0) {
+                priceValue = p3dRoundPrice(amount);
+        }
+
+        return accounting.formatMoney(priceValue, p3d.currency_symbol, decimals, p3d.thousand_sep, p3d.decimal_sep);
+}
+
+function motqnUpdateSummaryTotals() {
+        if (typeof window.p3d === 'undefined' || !p3d || typeof p3d.analyse_queue === 'undefined') {
+                return;
+        }
+
+        var total = 0;
+        var hasPricedItem = false;
+
+        jQuery.each(p3d.analyse_queue, function(file_id, file) {
+                if (!file || typeof file === 'function') {
+                        return;
+                }
+
+                var priceValue = typeof file.price !== 'undefined' ? file.price : null;
+
+                if (priceValue === null || priceValue === '') {
+                        return;
+                }
+
+                var numericPrice = parseFloat(priceValue);
+
+                if (!isNaN(numericPrice)) {
+                        total += numericPrice;
+                        hasPricedItem = true;
+                }
+        });
+
+        var $summaryPrice = jQuery('.plupload_total_price');
+
+        if (!$summaryPrice.length) {
+                        return;
+        }
+
+        if (!hasPricedItem) {
+                $summaryPrice.text('—');
+                $summaryPrice.addClass('motqn-summary__value--placeholder');
+                return;
+        }
+
+        $summaryPrice.text(motqnFormatSummaryPrice(total));
+        $summaryPrice.removeClass('motqn-summary__value--placeholder');
+}
+
+window.motqnUpdateSummaryTotals = motqnUpdateSummaryTotals;
+
+
 function p3dInitBulk() {
-	if (p3d.tooltip_engine=='tooltipster') {
-		jQuery('.p3d-tooltip').tooltipster({ contentAsHTML: true, maxWidth: 350, theme: 'tooltipster-'+p3d.tooltip_theme });
-	}
+        if (p3d.tooltip_engine=='tooltipster') {
+                jQuery('.p3d-tooltip').tooltipster({ contentAsHTML: true, maxWidth: 350, theme: 'tooltipster-'+p3d.tooltip_theme });
+        }
 	else if (p3d.tooltip_engine=='tippy') {
 		jQuery('.p3d-tooltip').each(function(i,item){
 			var tooltip_id = jQuery(this).data('tooltip-content');
@@ -63,23 +148,25 @@ jQuery(function() {
 		]
 		},
 		init: {
-			FilesRemoved:  function(p3d_uploader, files) {
-				if(files.length > 0) {
-					for (var i=0;i<files.length;i++) {
-						var file_id = files[i].id
-						if (typeof(p3d.analyse_queue[file_id])!='undefined') {
-							delete p3d.analyse_queue[file_id];
-						}
-					}
-				}
-			},
-			QueueChanged: function(p3d_uploader) {
-				if (p3d_uploader.files.length==0) {
-					jQuery('#p3d-calculate-price-button').prop('disabled', true);
-					jQuery('#p3d-calculate-loader').hide();
-					jQuery('#p3d-submit-button').prop('disabled', true);
-				}
-			},
+                        FilesRemoved:  function(p3d_uploader, files) {
+                                if(files.length > 0) {
+                                        for (var i=0;i<files.length;i++) {
+                                                var file_id = files[i].id
+                                                if (typeof(p3d.analyse_queue[file_id])!='undefined') {
+                                                        delete p3d.analyse_queue[file_id];
+                                                }
+                                        }
+                                }
+                                motqnUpdateSummaryTotals();
+                        },
+                        QueueChanged: function(p3d_uploader) {
+                                if (p3d_uploader.files.length==0) {
+                                        jQuery('#p3d-calculate-price-button').prop('disabled', true);
+                                        jQuery('#p3d-calculate-loader').hide();
+                                        jQuery('#p3d-submit-button').prop('disabled', true);
+                                }
+                                motqnUpdateSummaryTotals();
+                        },
 			PostInit: function() {
 				if ((navigator.platform.indexOf("iPhone") == -1) && (navigator.platform.indexOf("iPad") == -1)) {
 					jQuery('#p3d-bulk-uploader input[type=file]').prop('accept', p3d.file_extensions.split(',').map(i => '.' + i).join(','));
@@ -90,19 +177,20 @@ jQuery(function() {
 			jQuery('#p3d-calculate-loader').show();
 			jQuery('#p3d-submit-button').prop('disabled', true);
 
-			if(up.files.length > 0) {
-				for (var i=0;i<up.files.length;i++) {
-					var file_id = up.files[i].id
-					if (typeof(p3d.analyse_queue[file_id])=='undefined') {
-							
-						p3d.analyse_queue[file_id] = up.files[i]
-					}
-				}
-			}
+                        if(up.files.length > 0) {
+                                for (var i=0;i<up.files.length;i++) {
+                                        var file_id = up.files[i].id
+                                        if (typeof(p3d.analyse_queue[file_id])=='undefined') {
+
+                                                p3d.analyse_queue[file_id] = up.files[i]
+                                        }
+                                }
+                        }
 
 
-			up.start();
-		},
+                        up.start();
+                        motqnUpdateSummaryTotals();
+                },
 		BeforeUpload: function(up, file) {
 			if (typeof(p3d.analyse_queue[file.id])=='undefined') {
 				p3d.analyse_queue[file.id] = file;
@@ -848,11 +936,21 @@ function p3dRepairCheckBulk (filename, server, obj) {
 			var data = jQuery.parseJSON( msg );
 
 
-			if (typeof(data.rendered_file_url)!=='undefined' && data.rendered_file_url.length>0) {
-				//todo set thumnbail
-				p3d.analyse_queue[file_id].thumbnail_url = data.rendered_file_url;
-				jQuery(obj).find('.plupload_file_image').html('<a target="_blank" href="'+data.rendered_file_url+'"><img class="plupload_model_image" src="'+data.rendered_file_url+'"></a>');
-			}
+                        var previewUrl = '';
+
+                        if (typeof(data.rendered_file_url)!=='undefined' && data.rendered_file_url.length>0) {
+                                previewUrl = data.rendered_file_url;
+                        }
+                        else if (typeof(data.rendered_image_url)!=='undefined' && data.rendered_image_url.length>0) {
+                                previewUrl = data.rendered_image_url;
+                        }
+                        else if (typeof(data.thumbnail_url)!=='undefined' && data.thumbnail_url.length>0) {
+                                previewUrl = data.thumbnail_url;
+                        }
+
+                        if (previewUrl.length) {
+                                motqnSetFileThumbnail(file_id, previewUrl);
+                        }
 
 			if (typeof(data.dxf_bb)!=='undefined' && data.dxf_bb) {
 				if (!(data.dxf_bb.x_min==null || data.dxf_bb.x_max==null || data.dxf_bb.y_min==null || data.dxf_bb.y_max==null)) { //dxf file may be broken
@@ -1490,10 +1588,11 @@ function p3dShowResponseBulk(obj, model_stats) {
 	else 
 		html_price = accounting.formatMoney(price, p3d.currency_symbol, p3d.price_num_decimals, p3d.thousand_sep, p3d.decimal_sep);
 
-	p3d.analyse_queue[file_id].html_price = html_price; //todo bulk price update
-	p3d.analyse_queue[file_id].price = price;
+        p3d.analyse_queue[file_id].html_price = html_price; //todo bulk price update
+        p3d.analyse_queue[file_id].price = price;
 
-	jQuery(obj).find('.plupload_file_price').html(html_price);
+        jQuery(obj).find('.plupload_file_price').html(html_price);
+        motqnUpdateSummaryTotals();
 }
 
 function p3dSubmitFormBulk() {
