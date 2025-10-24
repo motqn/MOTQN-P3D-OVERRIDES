@@ -913,8 +913,10 @@ used as it is.
                                                                         '<div class="motqn-file-card__media">' +
                                                                                 '<div class="plupload_file_image">'+html_thumb+'</div>' +
                                                                                 '<div class="plupload_file_meta">' +
-                                                                                        '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
-                                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                                        '<div class="plupload_file_size">' +
+                                                                                                '<span class="plupload_file_size-value">' + plupload.formatSize(file.size) + '</span>' +
+                                                                                                '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
+                                                                                        '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                         '<div class="motqn-file-card__details">' +
