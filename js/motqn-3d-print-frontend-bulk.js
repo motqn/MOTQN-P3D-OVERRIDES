@@ -575,9 +575,10 @@ function p3dSelectPrinterBulk(obj) {
 
 function p3dSelectInfillBulk(obj) {
 
-        var infill = jQuery(obj).val();
+	var $select = jQuery(obj);
+	var infill = $select.val();
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = $select.closest('li[class^=plupload]').prop('id')
 
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].infill=infill;
@@ -586,8 +587,11 @@ function p3dSelectInfillBulk(obj) {
 //	jQuery(obj).val(infill)
 	p3dInitSelect2();
 
-	var infill_name = jQuery(obj).data('name');
-	p3dAnalyseModelBulk(jQuery(obj).closest('li[class^=plupload]').prop('id'));
+	var infill_name = $select.data('name');
+	p3dAnalyseModelBulk($select.closest('li[class^=plupload]').prop('id'));
+	if (typeof motqnSyncInfillSliderFromSelect === 'function') {
+		motqnSyncInfillSliderFromSelect($select);
+	}
 }
 
 function p3dSelectCoatingBulk(obj) {

@@ -522,10 +522,100 @@
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty input[type="number"] {
     padding: 6px 10px;
-    width: 64px;
+    width: 52px;
     text-align: center;
     appearance: auto;
     -moz-appearance: auto;
+}
+
+.motqn-infill-slider__select {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.motqn-infill-slider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.motqn-infill-slider__input {
+    flex: 1 1 auto;
+    min-width: 140px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+    cursor: pointer;
+}
+
+.motqn-infill-slider__input::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+}
+
+.motqn-infill-slider__input::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e 0%, #3b82f6 100%);
+}
+
+.motqn-infill-slider__input:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.motqn-infill-slider__input:disabled + .motqn-infill-slider__value {
+    opacity: 0.65;
+}
+
+.motqn-infill-slider__input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    border: 2px solid #e0e7ff;
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
+    transition: transform 0.2s ease;
+}
+
+.motqn-infill-slider__input::-webkit-slider-thumb:hover {
+    transform: scale(1.05);
+}
+
+.motqn-infill-slider__input::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    border: 2px solid #e0e7ff;
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
+    transition: transform 0.2s ease;
+}
+
+.motqn-infill-slider__input::-moz-range-thumb:hover {
+    transform: scale(1.05);
+}
+
+.motqn-infill-slider__value {
+    flex: 0 0 auto;
+    min-width: 48px;
+    text-align: right;
+    font-weight: 600;
+    color: #0f172a;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty input[type="number"]::-webkit-inner-spin-button,
