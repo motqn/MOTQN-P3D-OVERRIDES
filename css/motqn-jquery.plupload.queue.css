@@ -356,9 +356,10 @@
 
 .plupload_file_price-tag {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     padding: 10px 18px;
     border-radius: 14px;
     background: rgba(148, 163, 184, 0.16);
@@ -369,12 +370,11 @@
 }
 
 .plupload_file_price-tag-label {
-    text-transform: uppercase;
-    font-size: 11px;
+    text-transform: none;
+    font-size: 13px;
     font-weight: 600;
-    letter-spacing: 0.12em;
-    color: rgba(15, 23, 42, 0.55);
-    text-align: right;
+    letter-spacing: 0.02em;
+    color: rgba(15, 23, 42, 0.65);
 }
 
 .plupload_file_price-tag-value {

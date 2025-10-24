@@ -701,10 +701,30 @@ function p3dSelectUnitBulk(obj) {
 }
 
 function p3dSelectQTYBulk(obj) {
-        var qty = jQuery(obj).val();
-        var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+        var $input = jQuery(obj);
+        var qty = parseFloat($input.val());
+        var file_id = $input.closest('li[class^=plupload]').prop('id');
+
+        if (isNaN(qty) || qty < 1) {
+                qty = 1;
+        }
+
+        $input.val(qty);
+
         if (typeof(p3d.analyse_queue[file_id])!='undefined') {
-                p3d.analyse_queue[file_id].qty=qty;
+                var fileData = p3d.analyse_queue[file_id];
+                fileData.qty = qty;
+
+                if (typeof fileData.price !== 'undefined') {
+                        var totalPrice = fileData.price * qty;
+                        var formattedTotal = motqnFormatCurrency(totalPrice);
+
+                        fileData.total_price = totalPrice;
+                        fileData.html_price_total = formattedTotal;
+                        fileData.html_price = formattedTotal;
+
+                        $input.closest('li[class^=plupload]').find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(formattedTotal);
+                }
         }
 }
 

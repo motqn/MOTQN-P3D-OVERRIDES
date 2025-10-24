@@ -145,7 +145,7 @@ used as it is.
 
                 var sliderData = $select.data('motqnInfillSlider');
 
-                if (!sliderData || !sliderData.slider || !sliderData.value) {
+                if (!sliderData || sliderData.isSyncing || !sliderData.slider || !sliderData.value) {
                         return;
                 }
 
@@ -245,11 +245,14 @@ used as it is.
                 $select.attr('tabindex', '-1');
                 $select.attr('aria-hidden', 'true');
 
-                $select.data('motqnInfillSlider', {
+                var sliderData = {
                         options: options,
                         slider: $slider,
-                        value: $value
-                });
+                        value: $value,
+                        isSyncing: false
+                };
+
+                $select.data('motqnInfillSlider', sliderData);
 
                 $slider.on('input change', function() {
                         var rawIndex = parseInt(this.value, 10);
@@ -262,6 +265,8 @@ used as it is.
                                 return;
                         }
 
+                        sliderData.isSyncing = true;
+
                         var option = options[rawIndex];
 
                         if ($select.val() !== option.value) {
@@ -273,6 +278,10 @@ used as it is.
                         if (typeof p3dSelectInfillBulk === 'function') {
                                 p3dSelectInfillBulk($select[0]);
                         }
+
+                        setTimeout(function() {
+                                sliderData.isSyncing = false;
+                        }, 0);
                 });
 
                 $select.on('change.motqnInfillSlider', function() {
@@ -776,7 +785,7 @@ used as it is.
                                                 }
 
                                                 var attributes = '<table class="p3d-stats-bulk">';
-                                                var qty_row = '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)"></div></td></tr>';
+                                                var qty_row = '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div></td></tr>';
 
 						if (p3d.selection_order=='materials_printers') {
 							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
@@ -918,11 +927,11 @@ used as it is.
                                                                                 '</div>' +
                                                                                 '<div class="plupload_file_price">' +
                                                                                         '<span class="plupload_file_price-tag plupload_file_price-tag--unit">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Unit</span>' +
+                                                                                                '<span class="plupload_file_price-tag-label">Unit price</span>' +
                                                                                                 '<span class="plupload_file_price-tag-value">' + unit_price_display + '</span>' +
                                                                                         '</span>' +
                                                                                         '<span class="plupload_file_price-tag plupload_file_price-tag--total">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Total</span>' +
+                                                                                                '<span class="plupload_file_price-tag-label">Total price</span>' +
                                                                                                 '<span class="plupload_file_price-tag-value">' + total_price_display + '</span>' +
                                                                                         '</span>' +
                                                                                 '</div>' +
