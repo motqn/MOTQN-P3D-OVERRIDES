@@ -265,7 +265,16 @@ used as it is.
 						var postprocessing_attribute = $('#p3d_postprocessings_bulk_template').html();
 						var custom_attribute = $('#p3d_custom_attributes_bulk_template tbody').html();
 						var unit_attribute = $('#p3d_units_bulk_template').html();
-						var attributes = '<table class="p3d-stats-bulk">';
+                                                var qty_label = 'Quantity';
+
+                                                if (typeof p3d.text_bulk_qty !== 'undefined') {
+                                                        qty_label = p3d.text_bulk_qty;
+                                                } else if (typeof p3d.text_bulk_quantity !== 'undefined') {
+                                                        qty_label = p3d.text_bulk_quantity;
+                                                }
+
+                                                var attributes = '<table class="p3d-stats-bulk">';
+                                                attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)"></div></td></tr>';
 
 						if (p3d.selection_order=='materials_printers') {
 							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
@@ -359,11 +368,12 @@ used as it is.
 						fileList.append(
 							'<li class="p3d-filelist-item" id="' + file.id + '">' +
 								'<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_thumb+'</span></div>' +
-								'<div class="plupload_file_price">' + html_price + '</div>' +
-								'<div class="plupload_file_qty">' + '<input name="'+file.id+'_qty" type="number" min="1" step="1" value="1" onchange=p3dSelectQTYBulk(this)>' + '</div>' +
-								'<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
-								'<div class="plupload_file_status">' + html_status + '</div>' +
-								'<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
+                                                                '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
+                                                                '<div class="plupload_file_meta">' +
+                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
+                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                '</div>' +
 								'<div class="plupload_clearer">&nbsp;</div>' +
 								attributes +
 								inputHTML +
