@@ -856,9 +856,10 @@ used as it is.
 							file.percent = 100;
 						}
 //						console.log(file.percent, file.status)
-						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
+                                                var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
                                                 var html_stats = 'Click Calculate button to show stats';
+                                                var has_model_stats = false;
                                                 var stats_style = '';
                                                 var html_thumb = '';
                                                 var status_state = 'idle';
@@ -881,6 +882,11 @@ used as it is.
                                                         }
                                                         if (typeof(p3d.analyse_queue[file.id].status_state)!='undefined') {
                                                                 status_state = p3d.analyse_queue[file.id].status_state;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
+                                                                html_stats = p3d.analyse_queue[file.id].html_stats;
+                                                                stats_style = 'visibility:visible;';
+                                                                has_model_stats = true;
                                                         }
 							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
 								html_stats = p3d.analyse_queue[file.id].html_stats;
@@ -915,6 +921,9 @@ used as it is.
                                                                                 '<div class="plupload_file_meta">' +
                                                                                         '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
                                                                                         '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                                        '<div class="plupload_model_info" data-state="' + (has_model_stats ? 'ready' : 'empty') + '">' +
+                                                                                                '<div class="plupload_model_info__body">' + html_stats + '</div>' +
+                                                                                        '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                         '<div class="motqn-file-card__details">' +
@@ -944,6 +953,7 @@ used as it is.
                                                                         '<h2>Stats</h2>'+
 									'<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
 									'<div class="plupload-content">'+
+                                                                        html_stats+
 									html_stats+
 									'</div>'+
 								'</div>'+

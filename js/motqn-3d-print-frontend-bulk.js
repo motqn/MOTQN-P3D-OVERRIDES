@@ -1529,8 +1529,13 @@ function p3dShowResponseBulk(obj, model_stats) {
 	p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
 	p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
 	jQuery(obj).closest('li[class^=plupload]').find('.plupload_info_icon').css('visibility', 'visible')
-	jQuery('#plupload-popup-'+file_id).find('.plupload-content').html(html_stats)
+        jQuery('#plupload-popup-'+file_id).find('.plupload-content').html(html_stats)
 
+        var $model_info = jQuery('#'+file_id).find('.plupload_model_info');
+        if ($model_info.length) {
+                $model_info.attr('data-state', 'ready');
+                $model_info.find('.plupload_model_info__body').html(html_stats);
+        }
 
         var qty_value = parseFloat(jQuery('#'+file_id).find('.plupload_file_qty input').val());
         if (isNaN(qty_value) || qty_value < 1) {
