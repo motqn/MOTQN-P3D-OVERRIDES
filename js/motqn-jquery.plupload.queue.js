@@ -257,7 +257,8 @@ used as it is.
 						material_attribute += '</select>';
 */
 //console.log(file.status);
-						var file_ext = file.name.split('.').pop().toLowerCase();
+                                            var file_ext = file.name.split('.').pop().toLowerCase();
+                                            var file_extension_label = file_ext ? file_ext.toUpperCase() : '';
 						var material_attribute = $('#p3d_materials_bulk_template').html();
 						var printer_attribute = $('#p3d_printers_bulk_template').html();
 						var coating_attribute = $('#p3d_coatings_bulk_template').html();
@@ -273,7 +274,7 @@ used as it is.
                                                         qty_label = p3d.text_bulk_quantity;
                                                 }
 
-                                                var attributes = '<table class="p3d-stats-bulk">';
+                                            var attributes = '<table class="p3d-stats-bulk">';
                                                 attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)"></div></td></tr>';
 
 						if (p3d.selection_order=='materials_printers') {
@@ -348,7 +349,7 @@ used as it is.
 						var stats_style = '';
 						var html_thumb = '';
 
-						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                            if (typeof(p3d.analyse_queue[file.id])!='undefined') {
 							if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
 								html_price = p3d.analyse_queue[file.id].html_price;
 							}
@@ -365,29 +366,52 @@ used as it is.
 
 								
 						}
-						fileList.append(
-							'<li class="p3d-filelist-item" id="' + file.id + '">' +
-								'<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_thumb+'</span></div>' +
-                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
-                                                                '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
-                                                                '<div class="plupload_file_meta">' +
-                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
-                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                            var placeholder_text = file_extension_label || '3D';
+                                            var preview_markup = html_thumb ? html_thumb : '<span class="motqn-file-card__thumb-placeholder" aria-hidden="true">' + placeholder_text + '</span>';
+
+                                            fileList.append(
+                                                        '<li class="p3d-filelist-item" id="' + file.id + '">' +
+                                                                '<article class="motqn-file-card">' +
+                                                                        '<header class="motqn-file-card__header">' +
+                                                                                '<div class="plupload_file_name motqn-file-card__heading">' +
+                                                                                        '<span class="plupload_file_model_name">' + file.name + '</span>' +
+                                                                                        '<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-' + file.id + '" style="' + stats_style + '" aria-label="' + _('Show file statistics') + '"></a>' +
+                                                                                        (file_extension_label ? '<span class="motqn-file-card__badge">' + file_extension_label + '</span>' : '') +
+                                                                                '</div>' +
+                                                                                '<div class="plupload_file_price motqn-file-card__price">' + html_price + '</div>' +
+                                                                                '<div class="plupload_file_action"><a class="p3d-file-action motqn-file-card__remove" href="#" aria-label="' + _('Remove file') + '"></a></div>' +
+                                                                        '</header>' +
+                                                                        '<div class="motqn-file-card__body">' +
+                                                                                '<div class="motqn-file-card__media">' +
+                                                                                        '<div class="plupload_file_image motqn-file-card__preview">' + preview_markup + '</div>' +
+                                                                                        '<div class="plupload_file_meta motqn-file-card__metrics">' +
+                                                                                                '<div class="motqn-file-card__metric">' +
+                                                                                                        '<span class="motqn-file-card__metric-label">' + _('Status') + '</span>' +
+                                                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
+                                                                                                '</div>' +
+                                                                                                '<div class="motqn-file-card__metric">' +
+                                                                                                        '<span class="motqn-file-card__metric-label">' + _('Size') + '</span>' +
+                                                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                                                '</div>' +
+                                                                                        '</div>' +
+                                                                                '</div>' +
+                                                                                '<div class="motqn-file-card__form">' +
+                                                                                        attributes +
+                                                                                '</div>' +
+                                                                        '</div>' +
+                                                                        inputHTML +
+                                                                '</article>' +
+                                                        '</li>' +
+                                                        '<div id="plupload-popup-' + file.id + '" class="plupload-overlay">' +
+                                                                '<div class="plupload-popup">' +
+                                                                        '<h2>Stats</h2>' +
+                                                                        '<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>' +
+                                                                        '<div class="plupload-content">' +
+                                                                        html_stats +
+                                                                        '</div>' +
                                                                 '</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-								attributes +
-								inputHTML +
-							'</li>'+
-							'<div id="plupload-popup-'+file.id+'" class="plupload-overlay">'+
-								'<div class="plupload-popup">'+
-									'<h2>Stats</h2>'+
-									'<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
-									'<div class="plupload-content">'+
-									html_stats+
-									'</div>'+
-								'</div>'+
-							'</div>'
-						);
+                                                        '</div>'
+                                                );
 
 						window.wp.event_manager.doAction( '3dprint.fileList_appended');
 
@@ -575,12 +599,16 @@ used as it is.
 
 				uploader.bind('Init', function(up, res) {
 					// Enable rename support
-					if (!settings.unique_names && settings.rename) {
-						target.on('click', '#' + id + '_filelist div.plupload_file_name span', function(e) {
-							var targetSpan = $(e.target), file, parts, name, ext = "";
+                                        if (!settings.unique_names && settings.rename) {
+                                                target.on('click', '#' + id + '_filelist div.plupload_file_name span', function(e) {
+                                                        var targetSpan = $(e.target), file, parts, name, ext = "";
 
-							// Get file name and split out name and extension
-							file = up.getFile(targetSpan.parents('li')[0].id);
+                                                        if (!targetSpan.hasClass('plupload_file_model_name')) {
+                                                                return;
+                                                        }
+
+                                                        // Get file name and split out name and extension
+                                                        file = up.getFile(targetSpan.parents('li')[0].id);
 							name = file.name;
 							parts = /^(.+)(\.[^.]+)$/.exec(name);
 							if (parts) {
