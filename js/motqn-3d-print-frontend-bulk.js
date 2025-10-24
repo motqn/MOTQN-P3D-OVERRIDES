@@ -1455,13 +1455,29 @@ function p3dShowResponseBulk(obj, model_stats) {
 	}
 
 
-	jQuery('#p3d-info-bulk .stats-material-volume').html((model_stats.material_volume/1000).toFixed(2));
+        var $modelStatsBox = jQuery('#p3d-info-bulk');
+        var $summaryStatsContainer = jQuery('.motqn-summary__model-stats');
 
-	if (typeof(p3d.analyse_queue[file_id].thumbnail_url)!='undefined') {
-		jQuery('#p3d-info-bulk img.stats_plupload_model_image').prop('src', p3d.analyse_queue[file_id].thumbnail_url).show();
-		jQuery('#p3d-info-bulk a.stats_plupload_model_image_link').prop('href', p3d.analyse_queue[file_id].thumbnail_url);
-		jQuery('#p3d-cv-bulk').data('p3dv_model_url', p3d.upload_url+p3d.analyse_queue[file_id].server_name);
-	}
+        if ($modelStatsBox.length) {
+                if ($summaryStatsContainer.length && !$modelStatsBox.closest('.motqn-summary__model-stats').length) {
+                        $modelStatsBox.appendTo($summaryStatsContainer);
+                }
+
+                if (!$modelStatsBox.hasClass('motqn-summary__model-stats-box')) {
+                        $modelStatsBox.addClass('motqn-summary__model-stats-box');
+                }
+
+                $modelStatsBox.attr('aria-live', 'polite');
+                $modelStatsBox.find('table.p3d-stats').css('display', '');
+        }
+
+        jQuery('#p3d-info-bulk .stats-material-volume').html((model_stats.material_volume/1000).toFixed(2));
+
+        if (typeof(p3d.analyse_queue[file_id].thumbnail_url)!='undefined') {
+                jQuery('#p3d-info-bulk img.stats_plupload_model_image').prop('src', p3d.analyse_queue[file_id].thumbnail_url).show();
+                jQuery('#p3d-info-bulk a.stats_plupload_model_image_link').prop('href', p3d.analyse_queue[file_id].thumbnail_url);
+                jQuery('#p3d-cv-bulk').data('p3dv_model_url', p3d.upload_url+p3d.analyse_queue[file_id].server_name);
+        }
 
 	if (file_ext=='dxf') {
 		model_stats.surface_area = model_stats.x_dim * model_stats.y_dim;
@@ -1526,7 +1542,6 @@ function p3dShowResponseBulk(obj, model_stats) {
         }
         p3d.analyse_queue[file_id].html_stats = html_stats;
 
-        var $modelStatsBox = jQuery('#p3d-info-bulk');
         if ($modelStatsBox.length) {
                 $modelStatsBox.addClass('motqn-summary__model-stats-box--visible');
                 $modelStatsBox.closest('.motqn-summary__model-stats').addClass('is-visible');
