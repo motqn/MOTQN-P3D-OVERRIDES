@@ -253,10 +253,10 @@
     border-radius: 22px;
     padding: 24px;
     display: grid;
-    grid-template-columns: 92px minmax(0, 1fr) max-content auto;
-    grid-template-rows: auto auto;
+    grid-template-columns: 200px minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto auto;
     column-gap: 28px;
-    row-gap: 22px;
+    row-gap: 18px;
     align-items: start;
     box-shadow: 0 22px 38px rgba(15, 23, 42, 0.12);
 }
@@ -298,35 +298,35 @@
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_image {
     grid-column: 1 / 2;
-    grid-row: 1 / span 2;
+    grid-row: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 92px;
-    height: 92px;
-    border-radius: 16px;
+    width: 200px;
+    height: 200px;
+    border-radius: 18px;
     background: rgba(37, 99, 235, 0.08);
     border: 1px solid rgba(37, 99, 235, 0.18);
     box-shadow: inset 0 3px 8px rgba(255, 255, 255, 0.55);
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_image img {
-    width: 68px;
-    height: 68px;
+    width: 140px;
+    height: 140px;
     object-fit: contain;
     display: block;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_price {
-    grid-column: 3 / 4;
-    grid-row: 1;
+    grid-column: 2 / 3;
+    grid-row: 4;
     align-self: start;
-    justify-self: end;
+    justify-self: start;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
-    border-radius: 999px;
+    padding: 10px 20px;
+    border-radius: 14px;
     background: rgba(37, 99, 235, 0.12);
     color: #1d4ed8;
     font-size: 18px;
@@ -343,9 +343,8 @@
     color: rgba(29, 78, 216, 0.75);
 }
 
-.motqn-card-list li:not(.plupload_droptext) .plupload_file_qty,
-.motqn-card-list li:not(.plupload_droptext) .plupload_file_status,
-.motqn-card-list li:not(.plupload_droptext) .plupload_file_size {
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_qty {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -360,18 +359,31 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_status {
-    grid-column: 3 / 4;
+    grid-column: 1 / 2;
     grid-row: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    align-items: flex-start;
     font-size: 14px;
     color: #334155;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_size {
-    grid-column: 4 / 5;
-    grid-row: 2;
+    grid-column: 1 / 2;
+    grid-row: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    background: none;
+    border-radius: 0;
+    align-items: flex-start;
     font-size: 13px;
     color: #475569;
-    justify-self: end;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty::before,
@@ -409,7 +421,7 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_action {
-    grid-column: 4 / 5;
+    grid-column: 3 / 4;
     grid-row: 1;
     justify-self: end;
     align-self: start;
@@ -452,7 +464,8 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .p3d-stats-bulk {
-    grid-column: 1 / -1;
+    grid-column: 2 / 3;
+    grid-row: 3;
     width: 100%;
     margin: 6px 0 0;
     border-collapse: separate;
