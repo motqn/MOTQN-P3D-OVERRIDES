@@ -590,6 +590,7 @@
     border: 2px solid #e0e7ff;
     box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
     transition: transform 0.2s ease;
+    margin-top: -6px;
 }
 
 .motqn-infill-slider__input::-webkit-slider-thumb:hover {
@@ -604,10 +605,21 @@
     border: 2px solid #e0e7ff;
     box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
     transition: transform 0.2s ease;
+    margin-top: -6px;
 }
 
 .motqn-infill-slider__input::-moz-range-thumb:hover {
     transform: scale(1.05);
+}
+
+.motqn-infill-slider__input::-ms-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #1d4ed8;
+    border: 2px solid #e0e7ff;
+    box-shadow: 0 4px 10px rgba(29, 78, 216, 0.35);
+    margin-top: 0;
 }
 
 .motqn-infill-slider__value {
@@ -875,6 +887,78 @@
     font-size: 18px;
     font-weight: 600;
     color: #ffffff;
+}
+
+.motqn-summary__model-stats {
+    display: none;
+}
+
+.motqn-summary__model-stats.is-visible {
+    display: block;
+}
+
+.motqn-summary__model-stats-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.75);
+}
+
+.motqn-summary__model-stats-box {
+    display: none;
+    width: 100%;
+    background: rgba(15, 23, 42, 0.45);
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    padding: 16px;
+    box-shadow: inset 0 1px 0 rgba(148, 163, 184, 0.25);
+    color: #e2e8f0;
+}
+
+.motqn-summary__model-stats-box--visible {
+    display: block;
+}
+
+.motqn-summary__model-stats-box .p3d-stats-thumbnail {
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.motqn-summary__model-stats-box .p3d-stats-thumbnail img {
+    max-width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.32);
+}
+
+.motqn-summary__model-stats-box table.p3d-stats {
+    width: 100%;
+    border-collapse: collapse;
+    border: none;
+    margin: 0;
+    display: table;
+}
+
+.motqn-summary__model-stats-box table.p3d-stats tr + tr td {
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.motqn-summary__model-stats-box table.p3d-stats td {
+    padding: 8px 0;
+    font-size: 13px;
+    color: rgba(226, 232, 240, 0.9);
+}
+
+.motqn-summary__model-stats-box table.p3d-stats td:first-child {
+    font-weight: 500;
+    color: rgba(226, 232, 240, 0.7);
+}
+
+.motqn-summary__model-stats-box table.p3d-stats td:last-child {
+    text-align: right;
+    font-weight: 600;
+    color: #f8fafc;
 }
 
 .motqn-summary__actions {

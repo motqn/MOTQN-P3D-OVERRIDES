@@ -1520,14 +1520,21 @@ function p3dShowResponseBulk(obj, model_stats) {
 	jQuery('#p3d-info-bulk .stats-total-path').html((parseFloat(model_stats.cut_path)/10).toFixed(2));
 	jQuery('#p3d-info-bulk .stats-shapes').html(model_stats.shape_number);
 //	var html_stats = '<table>'+jQuery('#p3d-info-bulk .p3d-stats').html()+'</table>';
-	var html_stats = jQuery('#p3d-info-bulk').html();
-	if (typeof(p3d.analyse_queue[file_id].html_error_report)!='undefined') {
-		html_stats += p3d.analyse_queue[file_id].html_error_report;
-	}
-	p3d.analyse_queue[file_id].html_stats = html_stats;
-	p3d.analyse_queue[file_id].dim_x=(model_stats.x_dim/10).toFixed(2);
-	p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
-	p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
+        var html_stats = jQuery('#p3d-info-bulk').html();
+        if (typeof(p3d.analyse_queue[file_id].html_error_report)!='undefined') {
+                html_stats += p3d.analyse_queue[file_id].html_error_report;
+        }
+        p3d.analyse_queue[file_id].html_stats = html_stats;
+
+        var $modelStatsBox = jQuery('#p3d-info-bulk');
+        if ($modelStatsBox.length) {
+                $modelStatsBox.addClass('motqn-summary__model-stats-box--visible');
+                $modelStatsBox.closest('.motqn-summary__model-stats').addClass('is-visible');
+        }
+
+        p3d.analyse_queue[file_id].dim_x=(model_stats.x_dim/10).toFixed(2);
+        p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
+        p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
 	jQuery(obj).closest('li[class^=plupload]').find('.plupload_info_icon').css('visibility', 'visible')
 	jQuery('#plupload-popup-'+file_id).find('.plupload-content').html(html_stats)
 
