@@ -378,7 +378,6 @@ used as it is.
                                                                                         '<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-' + file.id + '" style="' + stats_style + '" aria-label="' + _('Show file statistics') + '"></a>' +
                                                                                         (file_extension_label ? '<span class="motqn-file-card__badge">' + file_extension_label + '</span>' : '') +
                                                                                 '</div>' +
-                                                                                '<div class="plupload_file_price motqn-file-card__price">' + html_price + '</div>' +
                                                                                 '<div class="plupload_file_action"><a class="p3d-file-action motqn-file-card__remove" href="#" aria-label="' + _('Remove file') + '"></a></div>' +
                                                                         '</header>' +
                                                                         '<div class="motqn-file-card__body">' +
@@ -397,6 +396,7 @@ used as it is.
                                                                                 '</div>' +
                                                                                 '<div class="motqn-file-card__form">' +
                                                                                         attributes +
+                                                                                        '<div class="plupload_file_price motqn-file-card__price">' + html_price + '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                         inputHTML +

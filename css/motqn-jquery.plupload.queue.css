@@ -13,6 +13,8 @@
 
 .motqn-uploader {
     width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
     border-radius: 20px;
     background: #ffffff;
     border: 1px solid #dbe4f3;
@@ -340,15 +342,15 @@
     gap: 2px;
     min-width: 0;
     width: 100%;
-    padding: 8px 12px;
+    padding: 10px 14px;
     border-radius: 14px;
     background: rgba(37, 99, 235, 0.08);
     color: #1d4ed8;
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.01em;
-    order: 3;
     text-align: left;
+    align-self: stretch;
 }
 
 .motqn-file-card__price::before {
@@ -483,7 +485,9 @@
 }
 
 .motqn-file-card__form {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .motqn-file-card__form .p3d-stats-bulk {
