@@ -522,7 +522,7 @@
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty input[type="number"] {
     padding: 6px 10px;
-    width: 84px;
+    width: 64px;
     text-align: center;
     appearance: auto;
     -moz-appearance: auto;
