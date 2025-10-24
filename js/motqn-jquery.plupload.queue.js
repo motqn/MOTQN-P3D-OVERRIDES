@@ -351,10 +351,6 @@ used as it is.
                 }
 
                 function syncFromOriginal() {
-                        if (isSyncing) {
-                                return;
-                        }
-
                         var currentValue = $select.val();
                         var matchedGroupKey = '';
 
@@ -374,14 +370,16 @@ used as it is.
                         }
 
                         if (matchedGroupKey) {
-                                if ($groupSelect.val() !== matchedGroupKey) {
+                                if (!isSyncing && $groupSelect.val() !== matchedGroupKey) {
                                         $groupSelect.val(matchedGroupKey);
                                 }
 
                                 renderColorsForGroup(matchedGroupKey, currentValue);
                         }
                         else {
-                                $groupSelect.val('');
+                                if (!isSyncing) {
+                                        $groupSelect.val('');
+                                }
                                 renderColorsForGroup('', currentValue);
                         }
                 }
