@@ -230,7 +230,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 12px;
     position: relative;
     z-index: 1;
     width: 100%;
@@ -255,8 +255,8 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 26px 32px;
+    gap: 14px;
+    padding: 18px 22px;
     border-radius: 20px;
     border: 1px solid rgba(148, 163, 184, 0.35);
     background: #ffffff;
@@ -267,7 +267,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 18px;
+    gap: 12px;
     flex-wrap: wrap;
 }
 
@@ -337,8 +337,8 @@
     align-items: flex-end;
     justify-content: center;
     gap: 2px;
-    min-width: 140px;
-    padding: 10px 16px;
+    min-width: 130px;
+    padding: 8px 12px;
     border-radius: 14px;
     background: rgba(37, 99, 235, 0.08);
     color: #1d4ed8;
@@ -394,14 +394,14 @@
 .motqn-file-card__body {
     display: grid;
     grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
-    gap: 24px 36px;
+    gap: 16px 24px;
     align-items: start;
 }
 
 .motqn-file-card__media {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 12px;
 }
 
 .motqn-file-card__preview {
@@ -413,7 +413,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 12px;
 }
 
 .motqn-file-card__preview a {
@@ -448,14 +448,14 @@
 
 .motqn-file-card__metrics {
     display: grid;
-    gap: 12px;
+    gap: 8px;
 }
 
 .motqn-file-card__metric {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px 14px;
+    padding: 8px 12px;
     border-radius: 12px;
     background: #f8fafc;
     border: 1px solid rgba(148, 163, 184, 0.25);
@@ -486,20 +486,20 @@
     border: none;
     border-radius: 18px;
     background: #f8fafc;
-    padding: 18px 20px;
+    padding: 12px 16px;
     display: grid;
-    gap: 14px;
+    gap: 10px;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .motqn-file-card__form .p3d-stats-bulk tr {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     background: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.25);
     border-radius: 12px;
-    padding: 12px 16px;
+    padding: 8px 12px;
     min-height: auto;
 }
 
@@ -596,7 +596,7 @@
 
 @media (max-width: 640px) {
     .motqn-file-card {
-        padding: 22px 20px;
+        padding: 16px 18px;
     }
 
     .plupload_file_name.motqn-file-card__heading {
@@ -610,7 +610,7 @@
     }
 
     .motqn-file-card__form .p3d-stats-bulk {
-        padding: 14px;
+        padding: 10px 12px;
         grid-template-columns: 1fr;
     }
 
