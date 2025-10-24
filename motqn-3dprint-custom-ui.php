@@ -54,14 +54,20 @@ function motqn_3dprint_dequeue_default_ui() {
                 }
             }
 
-            // --- Dequeue and Deregister the Default Stylesheet ---
-            $style_handle = 'jquery.plupload.queue.css';
-            if ( wp_style_is( $style_handle, 'enqueued' ) ) {
-                wp_dequeue_style( $style_handle );
-                wp_deregister_style( $style_handle );
-                // error_log("MOTQN 3DPrint Debug: Dequeued style: " . $style_handle);
-            } else {
-                // error_log("MOTQN 3DPrint Debug: Style not found or already dequeued: " . $style_handle);
+            // --- Dequeue and Deregister the Default Stylesheets ---
+            $style_handles = array(
+                'jquery.plupload.queue.css',
+                '3dprint-frontend',
+                '3dprint-frontend-css',
+                'p3d-frontend'
+            );
+
+            foreach ( $style_handles as $style_handle ) {
+                if ( wp_style_is( $style_handle, 'enqueued' ) ) {
+                    wp_dequeue_style( $style_handle );
+                    wp_deregister_style( $style_handle );
+                    // error_log("MOTQN 3DPrint Debug: Dequeued style: " . $style_handle);
+                }
             }
         }
     }
@@ -114,6 +120,13 @@ function motqn_enqueue_custom_uploader_assets() {
                 plugin_dir_url( __FILE__ ) . 'css/motqn-jquery.plupload.queue.css', // Path to your CSS file
                 array(), // Dependencies (if any)
                 $plugin_version // Use plugin version
+            );
+
+            wp_enqueue_style(
+                'motqn-custom-3dprint-frontend-css',
+                plugin_dir_url( __FILE__ ) . 'css/motqn-3dprint-frontend.css',
+                array( 'motqn-custom-uploader-css' ),
+                $plugin_version
             );
 
             // --- Optional: Pass PHP data to JavaScript ---
