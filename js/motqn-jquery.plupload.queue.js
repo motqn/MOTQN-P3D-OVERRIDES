@@ -365,22 +365,32 @@ used as it is.
 
 								
 						}
-						fileList.append(
-							'<li class="p3d-filelist-item" id="' + file.id + '">' +
-								'<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span><span class="plupload_file_image">'+html_thumb+'</span></div>' +
-                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
-                                                                '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
-                                                                '<div class="plupload_file_meta">' +
-                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
-                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                fileList.append(
+                                                        '<li class="p3d-filelist-item" id="' + file.id + '">' +
+                                                                '<div class="motqn-file-card">' +
+                                                                        '<div class="motqn-file-card__media">' +
+                                                                                '<div class="plupload_file_image">'+html_thumb+'</div>' +
+                                                                                '<div class="plupload_file_meta">' +
+                                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
+                                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
+                                                                                '</div>' +
+                                                                        '</div>' +
+                                                                        '<div class="motqn-file-card__details">' +
+                                                                                '<div class="motqn-file-card__header">' +
+                                                                                        '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span></div>' +
+                                                                                        '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
+                                                                                '</div>' +
+                                                                                '<div class="motqn-file-card__options">' +
+                                                                                        attributes +
+                                                                                '</div>' +
+                                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
+                                                                        '</div>' +
                                                                 '</div>' +
-								'<div class="plupload_clearer">&nbsp;</div>' +
-								attributes +
-								inputHTML +
-							'</li>'+
-							'<div id="plupload-popup-'+file.id+'" class="plupload-overlay">'+
-								'<div class="plupload-popup">'+
-									'<h2>Stats</h2>'+
+                                                                inputHTML +
+                                                        '</li>'+
+                                                        '<div id="plupload-popup-'+file.id+'" class="plupload-overlay">'+
+                                                                '<div class="plupload-popup">'+
+                                                                        '<h2>Stats</h2>'+
 									'<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
 									'<div class="plupload-content">'+
 									html_stats+
