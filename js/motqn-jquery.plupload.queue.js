@@ -138,6 +138,158 @@ used as it is.
                 return hex;
         }
 
+        function motqnSyncInfillSliderFromSelect($select) {
+                if (!$select || !$select.length) {
+                        return;
+                }
+
+                var sliderData = $select.data('motqnInfillSlider');
+
+                if (!sliderData || !sliderData.slider || !sliderData.value) {
+                        return;
+                }
+
+                var options = sliderData.options || [];
+                var currentValue = $select.val();
+                var index = 0;
+
+                for (var i = 0; i < options.length; i += 1) {
+                        if (options[i] && options[i].value == currentValue) {
+                                index = i;
+                                break;
+                        }
+                }
+
+                if (index >= options.length && options.length) {
+                        index = options.length - 1;
+                }
+
+                var selectedOption = options[index] || null;
+
+                if (selectedOption && currentValue !== selectedOption.value) {
+                        $select.val(selectedOption.value);
+                        currentValue = selectedOption.value;
+                }
+
+                sliderData.slider.val(index);
+
+                var label = '';
+                if (selectedOption) {
+                        label = selectedOption.label || selectedOption.value || '';
+                }
+
+                sliderData.value.text(label);
+        }
+
+        function motqnEnhanceInfillSlider($context) {
+                var $select = $context.find('select[name=product_infill]').first();
+
+                if (!$select.length || $select.data('motqnInfillSlider')) {
+                        return;
+                }
+
+                var options = [];
+                $select.children('option').each(function() {
+                        var $option = jQuery(this);
+                        var value = $option.val();
+
+                        if (typeof value === 'undefined' || value === null || value === '') {
+                                return;
+                        }
+
+                        var label = jQuery.trim($option.text());
+
+                        if (!label.length && typeof $option.data('name') !== 'undefined') {
+                                label = jQuery.trim($option.data('name'));
+                        }
+
+                        options.push({
+                                value: value,
+                                label: label
+                        });
+                });
+
+                if (!options.length) {
+                        return;
+                }
+
+                var sliderIdBase = ($context.attr('id') || 'motqn') + '-infill-slider';
+                var sliderId = sliderIdBase;
+                var sliderIndex = 1;
+
+                while (document.getElementById(sliderId)) {
+                        sliderId = sliderIdBase + '-' + sliderIndex;
+                        sliderIndex += 1;
+                }
+
+                var sliderLabel = (typeof window !== 'undefined' && window.p3d && (p3d.text_bulk_infill || p3d.text_infill || p3d.text_infill_density)) || motqnTranslate('Infill');
+                var $wrapper = jQuery('<div>', { 'class': 'motqn-infill-slider' });
+                var $slider = jQuery('<input>', {
+                        type: 'range',
+                        id: sliderId,
+                        'class': 'motqn-infill-slider__input',
+                        min: 0,
+                        max: Math.max(options.length - 1, 0),
+                        step: 1,
+                        'aria-label': sliderLabel
+                });
+                var $value = jQuery('<span>', { 'class': 'motqn-infill-slider__value' });
+
+                if (options.length <= 1) {
+                        $slider.prop('disabled', true);
+                }
+
+                $wrapper.append($slider, $value);
+                $select.after($wrapper);
+                $select.addClass('motqn-infill-slider__select');
+                $select.attr('tabindex', '-1');
+                $select.attr('aria-hidden', 'true');
+
+                $select.data('motqnInfillSlider', {
+                        options: options,
+                        slider: $slider,
+                        value: $value
+                });
+
+                $slider.on('input change', function() {
+                        var rawIndex = parseInt(this.value, 10);
+
+                        if (isNaN(rawIndex) || rawIndex < 0) {
+                                rawIndex = 0;
+                        }
+
+                        if (!options[rawIndex]) {
+                                return;
+                        }
+
+                        var option = options[rawIndex];
+
+                        if ($select.val() !== option.value) {
+                                $select.val(option.value);
+                        }
+
+                        $value.text(option.label || option.value || '');
+
+                        if (typeof p3dSelectInfillBulk === 'function') {
+                                p3dSelectInfillBulk($select[0]);
+                        }
+                });
+
+                $select.on('change.motqnInfillSlider', function() {
+                        motqnSyncInfillSliderFromSelect($select);
+                });
+
+                motqnSyncInfillSliderFromSelect($select);
+
+                setTimeout(function() {
+                        motqnSyncInfillSliderFromSelect($select);
+                }, 0);
+        }
+
+        if (typeof window !== 'undefined') {
+                window.motqnSyncInfillSliderFromSelect = motqnSyncInfillSliderFromSelect;
+        }
+
         function motqnEnhanceMaterialPicker($context) {
                 var $select = $context.find('select[name=product_filament]').first();
 
@@ -791,6 +943,7 @@ used as it is.
 
                                                 var $newListItem = $('#' + file.id, fileList);
                                                 motqnEnhanceMaterialPicker($newListItem);
+                                                motqnEnhanceInfillSlider($newListItem);
 
                                                 window.wp.event_manager.doAction( '3dprint.fileList_appended');
 
