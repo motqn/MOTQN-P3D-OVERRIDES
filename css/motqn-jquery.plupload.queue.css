@@ -266,7 +266,7 @@
 .motqn-file-card__header {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 12px;
     flex-wrap: wrap;
 }
@@ -279,6 +279,7 @@
     font-size: 18px;
     color: #0f172a;
     flex-wrap: wrap;
+    flex: 1 1 auto;
 }
 
 .plupload_file_name.motqn-file-card__heading span.plupload_file_model_name {
@@ -334,10 +335,11 @@
 .motqn-file-card__price {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     justify-content: center;
     gap: 2px;
-    min-width: 130px;
+    min-width: 0;
+    width: 100%;
     padding: 8px 12px;
     border-radius: 14px;
     background: rgba(37, 99, 235, 0.08);
@@ -345,6 +347,8 @@
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.01em;
+    order: 3;
+    text-align: left;
 }
 
 .motqn-file-card__price::before {
@@ -359,6 +363,7 @@
 .plupload_file_action {
     display: inline-flex;
     align-items: center;
+    margin-left: auto;
 }
 
 .plupload_file_action a.motqn-file-card__remove {
@@ -393,7 +398,7 @@
 
 .motqn-file-card__body {
     display: grid;
-    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
     gap: 16px 24px;
     align-items: start;
 }
@@ -409,11 +414,11 @@
     aspect-ratio: 1 / 1;
     border-radius: 16px;
     background: rgba(37, 99, 235, 0.08);
-    border: 1px solid rgba(37, 99, 235, 0.18);
+    border: 2px solid rgba(37, 99, 235, 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 12px;
+    padding: 16px;
 }
 
 .motqn-file-card__preview a {
@@ -426,8 +431,8 @@
 }
 
 .motqn-file-card__preview img.plupload_model_image {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 80%;
+    max-height: 80%;
     object-fit: contain;
     display: block;
 }
@@ -436,13 +441,14 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    height: 100%;
+    width: 80%;
+    height: 80%;
+    margin: auto;
     border-radius: 12px;
     background: rgba(15, 23, 42, 0.08);
     color: rgba(15, 23, 42, 0.55);
     font-weight: 700;
-    font-size: 20px;
+    font-size: 18px;
     letter-spacing: 0.12em;
 }
 
@@ -606,7 +612,7 @@
     .motqn-file-card__price {
         min-width: auto;
         width: 100%;
-        align-items: stretch;
+        align-items: flex-start;
     }
 
     .motqn-file-card__form .p3d-stats-bulk {
