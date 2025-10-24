@@ -998,3 +998,122 @@ div.p3d-images, div.p3d-details{
 table.p3d-stats-bulk option:disabled {
     display: none;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Override compact styling for the MOTQN file card form
+/* -------------------------------------------------------------------------- */
+
+.motqn-file-card__form .p3d-stats-bulk {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    display: table;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.motqn-file-card__form .p3d-stats-bulk tr {
+    display: table-row;
+    background: transparent;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0;
+}
+
+.motqn-file-card__form .p3d-stats-bulk tr:last-child {
+    border-bottom: none;
+}
+
+.motqn-file-card__form .p3d-stats-bulk td {
+    display: table-cell;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #1f2937;
+    vertical-align: middle;
+    border: none;
+}
+
+.motqn-file-card__form .p3d-stats-bulk td:first-child {
+    width: 140px;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #0f172a;
+}
+
+.motqn-file-card__form .p3d-stats-bulk td:last-child {
+    text-align: left;
+    display: table-cell;
+}
+
+.motqn-file-card__form .p3d-stats-bulk td:last-child > * {
+    width: auto;
+}
+
+.motqn-file-card__form .p3d-stats-bulk .plupload_file_qty {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.motqn-file-card__form .p3d-stats-bulk .plupload_file_qty input[type="number"] {
+    width: 90px;
+    padding: 4px 6px;
+    text-align: center;
+}
+
+.motqn-file-card__form .p3d-stats-bulk select,
+.motqn-file-card__form .p3d-stats-bulk textarea,
+.motqn-file-card__form .p3d-stats-bulk input[type="number"],
+.motqn-file-card__form .p3d-stats-bulk input[type="text"] {
+    width: auto;
+    min-width: 140px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    font-size: 14px;
+    color: inherit;
+    box-shadow: none;
+}
+
+.motqn-file-card__form .p3d-stats-bulk textarea {
+    min-height: 48px;
+}
+
+.motqn-file-card__form .p3d-stats-bulk select:focus,
+.motqn-file-card__form .p3d-stats-bulk textarea:focus,
+.motqn-file-card__form .p3d-stats-bulk input[type="number"]:focus,
+.motqn-file-card__form .p3d-stats-bulk input[type="text"]:focus {
+    outline: none;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.35);
+}
+
+@media (max-width: 640px) {
+    .motqn-file-card__form .p3d-stats-bulk,
+    .motqn-file-card__form .p3d-stats-bulk tr,
+    .motqn-file-card__form .p3d-stats-bulk td {
+        display: block;
+        width: 100%;
+    }
+
+    .motqn-file-card__form .p3d-stats-bulk td {
+        padding: 6px 0;
+    }
+
+    .motqn-file-card__form .p3d-stats-bulk td:first-child {
+        width: 100%;
+        padding-top: 10px;
+    }
+
+    .motqn-file-card__form .p3d-stats-bulk td:last-child {
+        padding-bottom: 10px;
+    }
+
+    .motqn-file-card__form .p3d-stats-bulk td:last-child > * {
+        width: 100%;
+    }
+}
