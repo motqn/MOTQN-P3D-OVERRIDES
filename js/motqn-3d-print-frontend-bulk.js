@@ -1535,8 +1535,13 @@ function p3dShowResponseBulk(obj, model_stats) {
         p3d.analyse_queue[file_id].dim_x=(model_stats.x_dim/10).toFixed(2);
         p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
         p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
-	jQuery(obj).closest('li[class^=plupload]').find('.plupload_info_icon').css('visibility', 'visible')
-	jQuery('#plupload-popup-'+file_id).find('.plupload-content').html(html_stats)
+        jQuery(obj).closest('li[class^=plupload]').find('.plupload_info_icon').css('visibility', 'visible')
+        jQuery('#plupload-popup-'+file_id).find('.plupload-content').html(html_stats)
+
+        var $fileCardModelInfo = jQuery('#' + file_id).find('.plupload_file_model-info');
+        if ($fileCardModelInfo.length) {
+                $fileCardModelInfo.html(html_stats);
+        }
 
 
         var qty_value = parseFloat(jQuery('#'+file_id).find('.plupload_file_qty input').val());
