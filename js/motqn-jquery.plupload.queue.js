@@ -621,6 +621,7 @@ used as it is.
                                                                                 '<dd><span class="plupload_total_file_size">0 b</span></dd>' +
                                                                         '</div>' +
                                                                 '</dl>' +
+                                                                '<div class="motqn-summary__model-stats" aria-live="polite"></div>' +
                                                                 '<div class="motqn-summary__actions">' +
                                                                         '<button type="button" class="motqn-button motqn-button--primary motqn-summary__primary">' + _('Submit Order') + '</button>' +
                                                                         '<button type="button" class="motqn-button motqn-button--ghost motqn-summary__secondary">' + _('Save to Cart') + '</button>' +
@@ -632,6 +633,24 @@ used as it is.
                                 '<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
                         '</div>'
                 );
+
+                var $summaryStatsContainer = target.find('.motqn-summary__model-stats');
+                var $modelStats = $('#p3d-info-bulk');
+
+                if ($summaryStatsContainer.length && $modelStats.length && !$summaryStatsContainer.find('#p3d-info-bulk').length) {
+                        if (!$summaryStatsContainer.find('.motqn-summary__model-stats-title').length) {
+                                $summaryStatsContainer.append('<h4 class="motqn-summary__model-stats-title">' + _('Model Stats') + '</h4>');
+                        }
+
+                        $modelStats
+                                .appendTo($summaryStatsContainer)
+                                .addClass('motqn-summary__model-stats-box')
+                                .removeClass('motqn-summary__model-stats-box--visible')
+                                .attr('aria-live', 'polite')
+                                .css('display', '');
+
+                        $modelStats.find('table.p3d-stats').css('display', '');
+                }
         }
 
 	$.fn.pluploadQueue = function(settings) {
