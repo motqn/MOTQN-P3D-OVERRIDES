@@ -203,11 +203,38 @@ used as it is.
 						actionClass = 'plupload_uploading';
 					}
 
-					var icon = $('#' + file.id).attr('class', actionClass).find('a').css('display', 'inline-block');
-					if (file.hint) {
-						icon.attr('title', file.hint);	
-					}
-				}
+                                        var icon = $('#' + file.id).attr('class', actionClass).find('a').css('display', 'inline-block');
+                                        if (file.hint) {
+                                                icon.attr('title', file.hint);
+                                        }
+
+                                        var statusState = '';
+                                        var $status = $('#' + file.id).find('.plupload_file_status');
+                                        if ($status.length) {
+                                                var currentState = $status.attr('data-state');
+                                                if (file.status == plupload.UPLOADING) {
+                                                        statusState = 'uploading';
+                                                }
+                                                else if (file.status == plupload.FAILED) {
+                                                        statusState = 'error';
+                                                }
+                                                else if (file.status == plupload.QUEUED) {
+                                                        statusState = 'idle';
+                                                }
+                                                else if (file.status == plupload.DONE) {
+                                                        if (!currentState || currentState === 'uploading' || currentState === 'idle') {
+                                                                statusState = 'complete';
+                                                        }
+                                                }
+
+                                                if (statusState) {
+                                                        $status.attr('data-state', statusState);
+                                                        if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                                p3d.analyse_queue[file.id].status_state = statusState;
+                                                        }
+                                                }
+                                        }
+                                }
 
 				function updateTotalProgress() {
 					$('span.plupload_total_status', target).html(uploader.total.percent + '%');
@@ -274,7 +301,7 @@ used as it is.
                                                 }
 
                                                 var attributes = '<table class="p3d-stats-bulk">';
-                                                attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)"></div></td></tr>';
+                                                var qty_row = '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)"></div></td></tr>';
 
 						if (p3d.selection_order=='materials_printers') {
 							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
@@ -326,17 +353,20 @@ used as it is.
 							}
 						}
 
-						if (custom_attribute) {
-							attributes += custom_attribute;
-						}
+                                                if (custom_attribute) {
+                                                        attributes += custom_attribute;
+                                                }
 
-						if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
+                                                attributes += qty_row;
+
+                                                if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
 						//todo custom attrs
 
 						attributes += '</table>';
 						if (typeof(file.price)=='undefined') file.price = 0;
 
-						var html_price = file.price;
+                                                var unit_price_display = file.price;
+                                                var total_price_display = file.price;
 
 						if (file.percent==99 && file.status==5) {
 							file.percent = 100;
@@ -344,17 +374,30 @@ used as it is.
 //						console.log(file.percent, file.status)
 						var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
-						var html_stats = 'Click Calculate button to show stats';
-						var stats_style = '';
-						var html_thumb = '';
+                                                var html_stats = 'Click Calculate button to show stats';
+                                                var stats_style = '';
+                                                var html_thumb = '';
+                                                var status_state = 'idle';
 
 						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
-							if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
-								html_price = p3d.analyse_queue[file.id].html_price;
-							}
-							if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
-								html_status = p3d.analyse_queue[file.id].html_status;
-							}
+                                                        if (typeof(p3d.analyse_queue[file.id].html_price_unit)!='undefined') {
+                                                                unit_price_display = p3d.analyse_queue[file.id].html_price_unit;
+                                                        }
+                                                        else if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
+                                                                unit_price_display = p3d.analyse_queue[file.id].html_price;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].html_price_total)!='undefined') {
+                                                                total_price_display = p3d.analyse_queue[file.id].html_price_total;
+                                                        }
+                                                        else if (typeof(p3d.analyse_queue[file.id].html_price)!='undefined') {
+                                                                total_price_display = p3d.analyse_queue[file.id].html_price;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].html_status)!='undefined') {
+                                                                html_status = p3d.analyse_queue[file.id].html_status;
+                                                        }
+                                                        if (typeof(p3d.analyse_queue[file.id].status_state)!='undefined') {
+                                                                status_state = p3d.analyse_queue[file.id].status_state;
+                                                        }
 							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
 								html_stats = p3d.analyse_queue[file.id].html_stats;
 								stats_style = 'visibility:visible;';
@@ -363,15 +406,30 @@ used as it is.
 								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
 							}
 
-								
-						}
+
+                                                }
+                                                if (status_state=='idle') {
+                                                        if (file.status == plupload.UPLOADING) {
+                                                                status_state = 'uploading';
+                                                        }
+                                                        else if (file.status == plupload.FAILED) {
+                                                                status_state = 'error';
+                                                        }
+                                                        else if (file.status == plupload.DONE) {
+                                                                status_state = 'complete';
+                                                        }
+                                                }
+
+                                                if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                        p3d.analyse_queue[file.id].status_state = status_state;
+                                                }
                                                 fileList.append(
                                                         '<li class="p3d-filelist-item" id="' + file.id + '">' +
                                                                 '<div class="motqn-file-card">' +
                                                                         '<div class="motqn-file-card__media">' +
                                                                                 '<div class="plupload_file_image">'+html_thumb+'</div>' +
                                                                                 '<div class="plupload_file_meta">' +
-                                                                                        '<div class="plupload_file_status">' + html_status + '</div>' +
+                                                                                        '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
                                                                                         '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
@@ -383,7 +441,16 @@ used as it is.
                                                                                 '<div class="motqn-file-card__options">' +
                                                                                         attributes +
                                                                                 '</div>' +
-                                                                                '<div class="plupload_file_price">' + html_price + '</div>' +
+                                                                                '<div class="plupload_file_price">' +
+                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--unit">' +
+                                                                                                '<span class="plupload_file_price-tag-label">Unit</span>' +
+                                                                                                '<span class="plupload_file_price-tag-value">' + unit_price_display + '</span>' +
+                                                                                        '</span>' +
+                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--total">' +
+                                                                                                '<span class="plupload_file_price-tag-label">Total</span>' +
+                                                                                                '<span class="plupload_file_price-tag-value">' + total_price_display + '</span>' +
+                                                                                        '</span>' +
+                                                                                '</div>' +
                                                                         '</div>' +
                                                                 '</div>' +
                                                                 inputHTML +
