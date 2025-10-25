@@ -110,6 +110,113 @@ used as it is.
                 return slug;
         }
 
+        function motqnBuildModelInfoSummary(htmlStats) {
+                if (typeof htmlStats !== 'string') {
+                        htmlStats = '';
+                }
+
+                var trimmed = $.trim(htmlStats);
+
+                if (!trimmed.length) {
+                        return '<p class="motqn-model-summary__empty">' + motqnTranslate('Click Calculate button to show stats') + '</p>';
+                }
+
+                var $scratch = $('<div>').html(htmlStats);
+                var $weightRow = $scratch.find('.tr-stats-weight');
+                var weightLabel = $.trim($weightRow.find('td:first-child').text()) || motqnTranslate('Model Weight');
+                var weightCellText = $.trim($weightRow.find('td:last-child').text());
+                var weightValue = $.trim($scratch.find('.stats-weight').first().text());
+                var weightDisplay = weightCellText || weightValue;
+
+                var $dimensionsRow = $scratch.find('.stats-width').length ? $scratch.find('.stats-width').closest('tr') : $scratch.find('.tr-stats-dimensions');
+                var dimensionsLabel = $.trim($dimensionsRow.find('td:first-child').text()) || motqnTranslate('Model Dimensions');
+                var dimensionsCellText = $.trim($dimensionsRow.find('td:last-child').text());
+                var lengthValue = $.trim($scratch.find('.stats-length').first().text());
+                var widthValue = $.trim($scratch.find('.stats-width').first().text());
+                var heightValue = $.trim($scratch.find('.stats-height').first().text());
+
+                var dimensionsSummary = '';
+                var axisValues = [];
+                var dimensionNumbers = [];
+
+                if (lengthValue) {
+                        axisValues.push({ axis: 'L', value: lengthValue });
+                        dimensionNumbers.push(lengthValue);
+                }
+                if (widthValue) {
+                        axisValues.push({ axis: 'W', value: widthValue });
+                        dimensionNumbers.push(widthValue);
+                }
+                if (heightValue) {
+                        axisValues.push({ axis: 'H', value: heightValue });
+                        dimensionNumbers.push(heightValue);
+                }
+
+                var dimensionsUnit = '';
+
+                if (dimensionsCellText && dimensionNumbers.length) {
+                        var combined = dimensionNumbers.join(' × ');
+
+                        if (dimensionsCellText.indexOf(combined) === 0) {
+                                dimensionsUnit = $.trim(dimensionsCellText.substring(combined.length));
+                        }
+                }
+
+                if (dimensionsUnit.length && axisValues.length) {
+                        axisValues = $.map(axisValues, function(item) {
+                                return {
+                                        axis: item.axis,
+                                        value: item.value + ' ' + dimensionsUnit
+                                };
+                        });
+                }
+
+                if (axisValues.length) {
+                        dimensionsSummary = '<div class="motqn-model-summary__dimensions">' +
+                                $.map(axisValues, function(item) {
+                                        return '<span class="motqn-model-summary__dimension"><span class="motqn-model-summary__dimension-axis">' + item.axis + '</span>' + item.value + '</span>';
+                                }).join('') +
+                                '</div>';
+                }
+
+                var hasWeight = !!weightDisplay;
+                var hasDimensions = !!dimensionsSummary;
+
+                if (!hasWeight && !hasDimensions) {
+                        var fallbackText = $.trim($scratch.text()) || trimmed;
+
+                        if (!fallbackText.length) {
+                                fallbackText = motqnTranslate('Click Calculate button to show stats');
+                        }
+
+                        return '<p class="motqn-model-summary__empty">' + fallbackText + '</p>';
+                }
+
+                var summarySections = [];
+
+                if (hasWeight) {
+                        summarySections.push(
+                                '<div class="motqn-model-summary__metric motqn-model-summary__metric--weight">' +
+                                        '<span class="motqn-model-summary__label">' + weightLabel + '</span>' +
+                                        '<span class="motqn-model-summary__value">' + weightDisplay + '</span>' +
+                                '</div>'
+                        );
+                }
+
+                if (hasDimensions) {
+                        summarySections.push(
+                                '<div class="motqn-model-summary__metric motqn-model-summary__metric--dimensions">' +
+                                        '<span class="motqn-model-summary__label">' + dimensionsLabel + '</span>' +
+                                        dimensionsSummary +
+                                '</div>'
+                        );
+                }
+
+                return '<div class="motqn-model-summary">' + summarySections.join('') + '</div>';
+        }
+
+        window.motqnBuildModelInfoSummary = motqnBuildModelInfoSummary;
+
         function motqnNormalizeColorHex(color) {
                 if (!color && color !== 0) {
                         return '';
@@ -859,9 +966,9 @@ used as it is.
                                                 var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
                                                 var html_stats = 'Click Calculate button to show stats';
+                                                var html_stats_summary = '';
                                                 var has_model_stats = false;
                                                 var stats_style = '';
-                                                var html_thumb = '';
                                                 var status_state = 'idle';
 
 						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
@@ -883,18 +990,15 @@ used as it is.
                                                         if (typeof(p3d.analyse_queue[file.id].status_state)!='undefined') {
                                                                 status_state = p3d.analyse_queue[file.id].status_state;
                                                         }
-                                                        if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
-                                                                html_stats = p3d.analyse_queue[file.id].html_stats;
-                                                                stats_style = 'visibility:visible;';
-                                                                has_model_stats = true;
-                                                        }
-							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
-								html_stats = p3d.analyse_queue[file.id].html_stats;
-								stats_style = 'visibility:visible;';
-							}
-							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
-								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
-							}
+                                                if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
+                                                        html_stats = p3d.analyse_queue[file.id].html_stats;
+                                                        stats_style = 'visibility:visible;';
+                                                        has_model_stats = true;
+                                                }
+
+                                                if (typeof(p3d.analyse_queue[file.id].html_stats_summary)!='undefined') {
+                                                        html_stats_summary = p3d.analyse_queue[file.id].html_stats_summary;
+                                                }
 
 
                                                 }
@@ -913,16 +1017,22 @@ used as it is.
                                                 if (typeof(p3d.analyse_queue[file.id])!='undefined') {
                                                         p3d.analyse_queue[file.id].status_state = status_state;
                                                 }
+                                                if (!html_stats_summary && typeof window.motqnBuildModelInfoSummary === 'function') {
+                                                        html_stats_summary = window.motqnBuildModelInfoSummary(html_stats);
+                                                        if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                                p3d.analyse_queue[file.id].html_stats_summary = html_stats_summary;
+                                                        }
+                                                }
+
                                                 fileList.append(
                                                         '<li class="p3d-filelist-item" id="' + file.id + '">' +
                                                                 '<div class="motqn-file-card">' +
                                                                         '<div class="motqn-file-card__media">' +
-                                                                                '<div class="plupload_file_image">'+html_thumb+'</div>' +
                                                                                 '<div class="plupload_file_meta">' +
                                                                                         '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
                                                                                         '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
                                                                                         '<div class="plupload_model_info" data-state="' + (has_model_stats ? 'ready' : 'empty') + '">' +
-                                                                                                '<div class="plupload_model_info__body">' + html_stats + '</div>' +
+                                                                                                '<div class="plupload_model_info__body">' + html_stats_summary + '</div>' +
                                                                                         '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
@@ -951,12 +1061,11 @@ used as it is.
                                                         '<div id="plupload-popup-'+file.id+'" class="plupload-overlay">'+
                                                                 '<div class="plupload-popup">'+
                                                                         '<h2>Stats</h2>'+
-									'<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
-									'<div class="plupload-content">'+
+                                                                        '<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
+                                                                        '<div class="plupload-content">'+
                                                                         html_stats+
-									html_stats+
-									'</div>'+
-								'</div>'+
+                                                                        '</div>'+
+                                                                '</div>'+
                                                         '</div>'
                                                 );
 

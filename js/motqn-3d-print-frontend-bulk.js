@@ -1521,10 +1521,12 @@ function p3dShowResponseBulk(obj, model_stats) {
 	jQuery('#p3d-info-bulk .stats-shapes').html(model_stats.shape_number);
 //	var html_stats = '<table>'+jQuery('#p3d-info-bulk .p3d-stats').html()+'</table>';
 	var html_stats = jQuery('#p3d-info-bulk').html();
+	var html_stats_summary = (typeof window.motqnBuildModelInfoSummary === 'function') ? window.motqnBuildModelInfoSummary(html_stats) : html_stats;
 	if (typeof(p3d.analyse_queue[file_id].html_error_report)!='undefined') {
 		html_stats += p3d.analyse_queue[file_id].html_error_report;
 	}
 	p3d.analyse_queue[file_id].html_stats = html_stats;
+	p3d.analyse_queue[file_id].html_stats_summary = html_stats_summary;
 	p3d.analyse_queue[file_id].dim_x=(model_stats.x_dim/10).toFixed(2);
 	p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
 	p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
@@ -1534,7 +1536,7 @@ function p3dShowResponseBulk(obj, model_stats) {
         var $model_info = jQuery('#'+file_id).find('.plupload_model_info');
         if ($model_info.length) {
                 $model_info.attr('data-state', 'ready');
-                $model_info.find('.plupload_model_info__body').html(html_stats);
+                $model_info.find('.plupload_model_info__body').html(html_stats_summary);
         }
 
         var qty_value = parseFloat(jQuery('#'+file_id).find('.plupload_file_qty input').val());
