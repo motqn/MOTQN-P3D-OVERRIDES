@@ -17,15 +17,15 @@
     background: #ffffff;
     border: 1px solid #dbe4f3;
     box-shadow: 0 28px 46px rgba(15, 23, 42, 0.08);
-    padding: 32px;
+    padding: 28px;
     color: #0f172a;
 }
 
 /* ==== LAYOUT: switch to two-column grid (left: uploader / right: sticky summary) ==== */
 .motqn-uploader__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) clamp(260px, 32vw, 340px);
-    gap: clamp(24px, 4vw, 32px);
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 30vw, 320px);
+    gap: clamp(20px, 3vw, 28px);
     align-items: start;
     /* ensure no accidental overflow/contain on this grid */
     overflow: visible !important;
@@ -36,7 +36,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
     grid-column: 1 / 2;
     overflow: visible !important; /* don't break sticky */
 }
@@ -45,11 +45,11 @@
 .motqn-uploader__files-section {
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 20px;
 }
 
 .motqn-uploader__files-section {
-    padding: 32px 28px;
+    padding: 28px 24px;
     border-radius: 24px;
     border: 1px solid rgba(148, 163, 184, 0.28);
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.94), #ffffff 88%);
@@ -68,9 +68,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 12px 20px;
+    padding: 10px 18px;
     border-radius: 999px;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     border: 1px solid transparent;
     text-decoration: none;
@@ -146,17 +146,17 @@
 .motqn-uploader__dropzone {
     width: 100%;
     border-radius: 24px;
-    padding: 44px 32px;
+    padding: 40px 30px;
     background: radial-gradient(135% 135% at 50% 10%, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.04) 42%, #ffffff 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 32px;
+    gap: 28px;
     position: relative;
     text-align: center;
     border: 2px dashed rgba(37, 99, 235, 0.35);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    min-height: 340px;
+    min-height: 280px;
 }
 
 .motqn-uploader__dropzone::before {
@@ -186,11 +186,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
-    font-size: 17px;
+    gap: 20px;
+    font-size: 15px;
     color: #1f2a44;
     line-height: 1.5;
-    max-width: 440px;
+    max-width: 420px;
 }
 
 .motqn-uploader__dropzone-icon {
@@ -230,11 +230,11 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
     position: relative;
     z-index: 1;
     width: 100%;
-    max-width: 1070px;
+    max-width: 1020px;
 }
 
 .motqn-card-list .plupload_droptext {
@@ -250,16 +250,16 @@
     position: relative;
     background: #ffffff;
     border: 1px solid rgba(148, 163, 184, 0.4);
-    border-radius: 22px;
-    padding: 24px;
+    border-radius: 20px;
+    padding: 20px;
     display: block;
-    box-shadow: 0 22px 38px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 20px 34px rgba(15, 23, 42, 0.11);
 }
 
 .motqn-card-list li:not(.plupload_droptext)::before {
     content: "";
     position: absolute;
-    inset: 12px;
+    inset: 10px;
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(255, 255, 255, 0.6) 100%);
     z-index: 0;
@@ -272,7 +272,7 @@
 
 .motqn-file-card {
     display: flex;
-    gap: 28px;
+    gap: 24px;
     align-items: flex-start;
     width: 100%;
 }
@@ -281,15 +281,15 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    flex: 0 0 300px;
-    max-width: 300px;
+    gap: 14px;
+    flex: 0 0 260px;
+    max-width: 260px;
 }
 
 .motqn-file-card__details {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     flex: 1 1 auto;
     min-width: 0;
 }
@@ -298,7 +298,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 16px;
+    gap: 14px;
     flex-wrap: wrap;
 }
 
@@ -321,10 +321,10 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_name {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     font-weight: 600;
     color: #0f172a;
-    font-size: 16px;
+    font-size: 15px;
     line-height: 1.4;
     flex: 1 1 320px;
 }
@@ -333,8 +333,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 220px;
-    height: 220px;
+    width: 200px;
+    height: 200px;
     border-radius: 18px;
     background: rgba(37, 99, 235, 0.08);
     border: 1px solid rgba(37, 99, 235, 0.18);
@@ -342,8 +342,8 @@
 }
 
 .motqn-file-card__media .plupload_file_image img {
-    width: 140px;
-    height: 140px;
+    width: 130px;
+    height: 130px;
     object-fit: contain;
     display: block;
 }
@@ -352,7 +352,7 @@
     align-self: flex-start;
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
+    gap: 10px;
     margin-left: auto;
     justify-content: flex-end;
     align-items: flex-end;
@@ -365,25 +365,25 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 10px 18px;
+    padding: 9px 16px;
     border-radius: 14px;
     background: rgba(148, 163, 184, 0.16);
     color: #1f2937;
     font-weight: 600;
     letter-spacing: 0.01em;
-    min-width: 130px;
+    min-width: 120px;
 }
 
 .plupload_file_price-tag-label {
     text-transform: none;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.02em;
     color: rgba(15, 23, 42, 0.65);
 }
 
 .plupload_file_price-tag-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     text-align: right;
 }
@@ -415,8 +415,8 @@
     border-radius: 14px;
     background: rgba(148, 163, 184, 0.16);
     color: #1f2937;
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 11px 14px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.01em;
     width: 100%;
@@ -437,7 +437,7 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_status::before,
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_size::before {
     text-transform: uppercase;
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.14em;
     color: rgba(15, 23, 42, 0.55);
@@ -446,12 +446,12 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload_model_info {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 9px;
     border-radius: 14px;
     background: rgba(59, 130, 246, 0.12);
     color: #0f172a;
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: 11px 14px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.01em;
     width: 100%;
@@ -478,8 +478,8 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_model_info td {
-    padding: 4px 0;
-    font-size: 12px;
+    padding: 3px 0;
+    font-size: 11px;
     color: #0f172a;
 }
 
@@ -518,7 +518,7 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -527,7 +527,7 @@
 
 .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-value {
     margin-left: auto;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #0f172a;
     letter-spacing: 0.01em;
@@ -624,14 +624,14 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty input,
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty select {
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.45);
-    font-size: 14px;
+    font-size: 13px;
     color: #0f172a;
     background: #ffffff;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
@@ -805,16 +805,16 @@
 }
 
 .motqn-card-list li:not(.plupload_droptext) .p3d-stats-bulk td {
-    padding: 14px 18px;
+    padding: 12px 16px;
     vertical-align: middle;
-    font-size: 14px;
+    font-size: 13px;
     color: #0f172a;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .p3d-stats-bulk td:first-child {
-    width: 28%;
+    width: 26%;
     text-transform: uppercase;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.12em;
     color: rgba(15, 23, 42, 0.55);
@@ -826,10 +826,10 @@
 .motqn-card-list li:not(.plupload_droptext) .p3d-stats-bulk input[type="number"],
 .motqn-card-list li:not(.plupload_droptext) .p3d-stats-bulk input[type="text"] {
     width: 100%;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: 10px;
     border: 1px solid rgba(148, 163, 184, 0.45);
-    font-size: 14px;
+    font-size: 13px;
     color: #0f172a;
     background: #ffffff;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
@@ -882,7 +882,7 @@
 
 .motqn-material-picker__message {
     margin: 0;
-    font-size: 13px;
+    font-size: 12px;
     color: rgba(15, 23, 42, 0.55);
 }
 
@@ -890,12 +890,12 @@
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
+    padding: 9px 12px;
     border-radius: 12px;
     border: 1px solid transparent;
     background: rgba(148, 163, 184, 0.16);
     color: #0f172a;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
@@ -930,7 +930,7 @@
 }
 
 .motqn-material-chip__label {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
 }
 
@@ -956,18 +956,18 @@
     background: radial-gradient(circle at top, #1d4ed8 0%, #0f172a 80%);
     border-radius: 24px;
     color: #e2e8f0;
-    padding: clamp(20px, 3.5vw, 24px);
+    padding: clamp(18px, 3vw, 22px);
     box-shadow: 0 26px 45px rgba(30, 58, 138, 0.32);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 18px;
     max-height: calc(100vh - 50px); /* view-height guard while sticky */
     overflow: auto;                  /* inner scroll if content grows */
 }
 
 .motqn-summary__title {
     margin: 0;
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
     color: #f8fafc;
 }
@@ -984,19 +984,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .motqn-summary__item dt {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: rgba(226, 232, 240, 0.75);
 }
 
 .motqn-summary__item dd {
     margin: 0;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: #ffffff;
 }
@@ -1004,7 +1004,7 @@
 .motqn-summary__actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .motqn-summary__actions .motqn-button {
