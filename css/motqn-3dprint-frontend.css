@@ -824,9 +824,10 @@ textarea.p3d-bulk-comments {
 }
 
 .p3d-stats-thumbnail {
-	text-align: center;
-	text-align: -webkit-center;
-	text-align: -moz-center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
 }
 
 img.stats_plupload_model_image {
