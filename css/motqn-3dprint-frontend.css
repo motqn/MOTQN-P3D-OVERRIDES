@@ -553,6 +553,16 @@ nav.applePie {
 	font-size: inherit;
 }
 
+.motqn-select--unit-value {
+	max-width: 80px !important;
+	max-height: 37px !important;
+}
+
+.motqn-input--qty-value {
+	max-width: 80px !important;
+	max-height: 37px !important;
+}
+
 .p3d-dropdown-searchable-wrap {
   position: relative;
   display: inline-block;
@@ -824,10 +834,9 @@ textarea.p3d-bulk-comments {
 }
 
 .p3d-stats-thumbnail {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+	text-align: center;
+	text-align: -webkit-center;
+	text-align: -moz-center;
 }
 
 img.stats_plupload_model_image {
