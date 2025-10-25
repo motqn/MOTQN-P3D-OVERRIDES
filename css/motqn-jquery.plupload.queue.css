@@ -1046,23 +1046,23 @@
 }
 
 /* ==== UNBLOCK STICKY INSIDE WP/PLUPLOAD/WOOSTIFY WRAPPERS ==== */
-#main,
-#main .hentry,
-#main article,
-#main .entry-content,
-#main .plupload_wrapper,
-#main .plupload_container,
-#main .plupload,
-#main .motqn-uploader__grid,
-#view,
-#content,
-.site-content,
-.woostify-container,
-#primary,
-.content-area,
-.site-main,
-.site-footer,
-.select2-container {
+body.motqn-has-custom-bulk-uploader #main,
+body.motqn-has-custom-bulk-uploader #main .hentry,
+body.motqn-has-custom-bulk-uploader #main article,
+body.motqn-has-custom-bulk-uploader #main .entry-content,
+body.motqn-has-custom-bulk-uploader #main .plupload_wrapper,
+body.motqn-has-custom-bulk-uploader #main .plupload_container,
+body.motqn-has-custom-bulk-uploader #main .plupload,
+body.motqn-has-custom-bulk-uploader #main .motqn-uploader__grid,
+body.motqn-has-custom-bulk-uploader #view,
+body.motqn-has-custom-bulk-uploader #content,
+body.motqn-has-custom-bulk-uploader .site-content,
+body.motqn-has-custom-bulk-uploader .woostify-container,
+body.motqn-has-custom-bulk-uploader #primary,
+body.motqn-has-custom-bulk-uploader .content-area,
+body.motqn-has-custom-bulk-uploader .site-main,
+body.motqn-has-custom-bulk-uploader .site-footer,
+body.motqn-has-custom-bulk-uploader .select2-container {
     overflow: visible !important;
     contain: none !important;
     transform: none !important;
