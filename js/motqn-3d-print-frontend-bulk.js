@@ -1393,6 +1393,10 @@ function p3dHasPendingBulkAnalysis() {
                         return;
                 }
 
+                if (typeof value.pending_analysis_signature === 'undefined') {
+                        return;
+                }
+
                 if (typeof(value.analyse_status)!='undefined' && value.analyse_status===0) {
                         pending = true;
                         return false;
@@ -1414,12 +1418,16 @@ function p3dAnalyseModelsBulk() {
                 jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
                         var status = 0;
                         var file_id = value.id;
-			if (typeof(value.analyse_status)!='undefined') {
+                        if (typeof(value.analyse_status)!='undefined') {
 
-				if (value.analyse_status==0 && value.uploaded) {
-					status = value.status;
-					obj = document.getElementById(file_id);
-					p3d.analyse_requested = true;
+                                if (typeof value.pending_analysis_signature === 'undefined') {
+                                        return;
+                                }
+
+                                if (value.analyse_status==0 && value.uploaded) {
+                                        status = value.status;
+                                        obj = document.getElementById(file_id);
+                                        p3d.analyse_requested = true;
 					p3dAnalyseModelAJAXBulk (obj, status);
 					return false; //break
 				}
@@ -1432,19 +1440,24 @@ function p3dAnalyseModelsBulk() {
 
 		});
 
-		jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
-			
-			if (typeof(value.analyse_status)!='undefined') {
+                p3d.all_finished = true;
 
-				if ((value.analyse_status==0 || value.analyse_status==2) && value.uploaded) {
-					p3d.all_finished = false;
-					return false; //break
-				}
-				else {
-					p3d.all_finished = true;
-					return; //continue
-				}
-			}
+                jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+
+                        if (typeof(value.analyse_status)!='undefined') {
+
+                                if (typeof value.pending_analysis_signature === 'undefined') {
+                                        return;
+                                }
+
+                                if ((value.analyse_status==0 || value.analyse_status==2) && value.uploaded) {
+                                        p3d.all_finished = false;
+                                        return false; //break
+                                }
+                                else {
+                                        return; //continue
+                                }
+                        }
                 })
                 if (p3d.all_finished) {
                         clearInterval(p3d.analyse_ajax_interval_bulk);
