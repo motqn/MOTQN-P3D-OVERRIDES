@@ -10,6 +10,7 @@ p3d.xhr4='';
 p3d.all_finished = false;
 p3d.image_height=5;
 p3d.image_map=1;
+p3d.auto_analyse_timeout = null;
 
 
 function p3dInitBulk() {
@@ -1052,27 +1053,64 @@ function p3dRepairModelsBulk() {
 	}
 }
 function p3dAnalyseModelBulk(file_id) {
-	if (typeof(file_id)=='undefined') return;
-	if (typeof(p3d.analyse_queue[file_id])=='undefined') return;
-	if (typeof(p3d.analyse_queue[file_id].repair_status)!='undefined' && p3d.analyse_queue[file_id].repair_status==-1) {
-		return;
+        if (typeof(file_id)=='undefined') return;
+        if (typeof(p3d.analyse_queue[file_id])=='undefined') return;
+        if (typeof(p3d.analyse_queue[file_id].repair_status)!='undefined' && p3d.analyse_queue[file_id].repair_status==-1) {
+                return;
 	}
 	clearInterval(p3d.refresh_interval);	              
 
 	p3d.analyse_queue[file_id].analyse_status = 0;
-	p3d.analyse_queue[file_id].new_pricing = false;
-	p3d.analyse_requested = true;
-	jQuery('#p3d-calculate-price-button').show();
-	jQuery('#p3d-submit-button').prop('disabled', true);
+        p3d.analyse_queue[file_id].new_pricing = false;
+        p3d.analyse_requested = true;
+        jQuery('#p3d-calculate-price-button').show();
+        jQuery('#p3d-submit-button').prop('disabled', true);
+        p3dScheduleAutoAnalyse();
+}
+
+function p3dScheduleAutoAnalyse() {
+        if (p3d.auto_analyse_timeout) {
+                clearTimeout(p3d.auto_analyse_timeout);
+        }
+
+        p3d.auto_analyse_timeout = setTimeout(function() {
+                p3d.auto_analyse_timeout = null;
+
+                if (p3dHasPendingBulkAnalysis()) {
+                        p3dAnalyseModelsBulk();
+                }
+        }, 300);
+}
+
+function p3dHasPendingBulkAnalysis() {
+        var pending = false;
+
+        jQuery.each(Object.values(p3d.analyse_queue), function(index, value) {
+                if (!value || !value.uploaded) {
+                        return;
+                }
+
+                if (typeof(value.analyse_status)!='undefined' && value.analyse_status===0) {
+                        pending = true;
+                        return false;
+                }
+        });
+
+        return pending;
 }
 
 function p3dAnalyseModelsBulk() {
-	jQuery('#p3d-calculate-price-button').hide();
+        jQuery('#p3d-calculate-price-button').hide();
+        jQuery('#p3d-calculate-loader').show();
 
-	p3d.analyse_ajax_interval_bulk = setInterval(function(){
-		jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
-			var status = 0;
-			var file_id = value.id;
+        if (p3d.analyse_ajax_interval_bulk) {
+                clearInterval(p3d.analyse_ajax_interval_bulk);
+        }
+
+        p3d.analyse_ajax_interval_bulk = setInterval(function(){
+                jQuery.each(Object.values(p3d.analyse_queue), function( index, value ) {
+                        var status = 0;
+                        var file_id = value.id;
 			if (typeof(value.analyse_status)!='undefined') {
 
 				if (value.analyse_status==0 && value.uploaded) {
@@ -1104,14 +1142,15 @@ function p3dAnalyseModelsBulk() {
 					return; //continue
 				}
 			}
-		})
-		if (p3d.all_finished) {
-			clearInterval(p3d.analyse_ajax_interval_bulk);
-		}
+                })
+                if (p3d.all_finished) {
+                        clearInterval(p3d.analyse_ajax_interval_bulk);
+                        p3d.analyse_ajax_interval_bulk = null;
+                }
 
-		p3dCheckAllFinished();
+                p3dCheckAllFinished();
 
-	}, 1000);
+        }, 1000);
 }
 
 function p3dAnalyseModelAJAXBulk (obj, status) {
@@ -1657,20 +1696,23 @@ function p3dSubmitFormBulk() {
 }
 
 function p3dCheckAllFinished() {
-	if (p3d.all_finished) {
-		jQuery('.p3d-button-loader').hide();
-		jQuery('#p3d-submit-button').prop('disabled', false);
-		jQuery('#p3d-submit-button').show();
-		jQuery('#p3d-bulk-uploader_browse').show();
-		jQuery('.p3d-stats-bulk').find('select').prop('disabled', false);
-	}
-	else {
-		jQuery('.p3d-button-loader').show();
-		jQuery('#p3d-submit-button').prop('disabled', true);
-		//jQuery('#p3d-submit-button').hide();
-		jQuery('#p3d-bulk-uploader_browse').hide();
-		jQuery('.p3d-stats-bulk').find('select').prop('disabled', true);
-	}
+        if (p3d.all_finished) {
+                jQuery('.p3d-button-loader').hide();
+                jQuery('#p3d-calculate-loader').hide();
+                jQuery('#p3d-calculate-price-button').prop('disabled', false);
+                jQuery('#p3d-submit-button').prop('disabled', false);
+                jQuery('#p3d-submit-button').show();
+                jQuery('#p3d-bulk-uploader_browse').show();
+                jQuery('.p3d-stats-bulk').find('select').prop('disabled', false);
+        }
+        else {
+                jQuery('.p3d-button-loader').show();
+                jQuery('#p3d-calculate-loader').show();
+                jQuery('#p3d-submit-button').prop('disabled', true);
+                //jQuery('#p3d-submit-button').hide();
+                jQuery('#p3d-bulk-uploader_browse').hide();
+                jQuery('.p3d-stats-bulk').find('select').prop('disabled', true);
+        }
 }
 
 
