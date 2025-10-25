@@ -323,7 +323,10 @@ function p3dSelectCuttingInstructionsBulk(file_id, self) {
 	p3dAnalyseModelBulk(file_id);
 }
 function p3dSelectCustomAttribute(obj) {
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 	var attribute_name = jQuery(obj).data('id');
 	var attribute_value = jQuery(obj).val();
 //	console.log(attribute_name+'='+attribute_value);
@@ -340,7 +343,10 @@ function p3dSelectCustomAttribute(obj) {
 }
 function p3dSelectFilamentBulk(obj) {
 	var material_id = jQuery(obj).val();
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 //	var filename = p3d.analyse_queue[file_id].server_name;
 //	var file_ext = filename.split('.').pop().toLowerCase();
 //console.log(material_id);
@@ -455,7 +461,10 @@ function p3dSelectPrinterBulk(obj) {
 
 //	if (jQuery(obj).prop('disabled')) return false; //todo ?
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].printer_id=printer_id;
@@ -582,7 +591,10 @@ function p3dSelectInfillBulk(obj) {
 	var $select = jQuery(obj);
 	var infill = $select.val();
 
-	var file_id = $select.closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement($select);
+	if (!file_id) {
+		return;
+	}
 
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].infill=infill;
@@ -592,7 +604,7 @@ function p3dSelectInfillBulk(obj) {
 	p3dInitSelect2();
 
 	var infill_name = $select.data('name');
-	p3dAnalyseModelBulk($select.closest('li[class^=plupload]').prop('id'));
+	p3dAnalyseModelBulk(file_id);
 	if (typeof motqnSyncInfillSliderFromSelect === 'function') {
 		motqnSyncInfillSliderFromSelect($select);
 	}
@@ -601,7 +613,10 @@ function p3dSelectInfillBulk(obj) {
 function p3dSelectCoatingBulk(obj) {
         var coating_id = jQuery(obj).val();
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].coating_id=coating_id;
@@ -634,18 +649,19 @@ function p3dSelectPostprocessingBulk(obj, e) {
 	e.target.selected = !e.target.selected;
 	e.stopPropagation();
 
-        var postprocessing_id = jQuery(obj).val();
+	var postprocessing_id = jQuery(obj).val();
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return false;
+	}
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].postprocessing_id=postprocessing_id;
 	}
 
-
-	jQuery(obj).val(postprocessing_id); 
+	jQuery(obj).val(postprocessing_id);
 
 	p3dInitSelect2Bulk();
-
 
 	var postprocessing_name=jQuery(obj).data('name');
 	var material_color=jQuery(obj).data('color');
@@ -666,8 +682,7 @@ function p3dSelectPostprocessingBulk(obj, e) {
 	return false;
 }
 
-
-function p3dInitSelect2Bulk() {
+ function p3dInitSelect2Bulk() {
 
 }
 
@@ -678,7 +693,10 @@ function p3dCheckPrintabilityBulk() {
 
 function p3dSelectUnitBulk(obj) {
 	var unit = jQuery(obj).val();
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].unit=unit;
@@ -707,7 +725,10 @@ function p3dSelectUnitBulk(obj) {
 function p3dSelectQTYBulk(obj) {
         var $input = jQuery(obj);
         var qty = parseFloat($input.val());
-        var file_id = $input.closest('li[class^=plupload]').prop('id');
+        var file_id = motqnGetFileIdFromElement($input);
+        if (!file_id) {
+                return;
+        }
 
         if (isNaN(qty) || qty < 1) {
                 qty = 1;
@@ -727,7 +748,7 @@ function p3dSelectQTYBulk(obj) {
                         fileData.html_price_total = formattedTotal;
                         fileData.html_price = formattedTotal;
 
-                        $input.closest('li[class^=plupload]').find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(formattedTotal);
+                        motqnGetFileListItem($input).find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(formattedTotal);
                 }
         }
 
@@ -742,6 +763,32 @@ function motqnFormatCurrency(value) {
         return accounting.formatMoney(value, p3d.currency_symbol, p3d.price_num_decimals, p3d.thousand_sep, p3d.decimal_sep);
 }
 
+function motqnGetFileListItem($element) {
+	if (!$element || !$element.length) {
+		return jQuery();
+}
+
+	var $item = $element.closest('.p3d-filelist-item');
+
+	if ($item.length) {
+		return $item;
+}
+
+	return $element.closest('li[class^=plupload]');
+}
+
+function motqnGetFileIdFromElement($element) {
+	var $item = motqnGetFileListItem($element);
+
+	if (!$item.length) {
+		return null;
+}
+
+	var fileId = $item.prop('id');
+
+	return fileId ? fileId : null;
+}
+
 function motqnUpdateSummaryTotals($scope) {
         var totalPrice = 0;
         var hasTotals = false;
@@ -751,7 +798,7 @@ function motqnUpdateSummaryTotals($scope) {
 
         if ($summaryScope.length) {
                 fileScope = {};
-                $summaryScope.find('li[class^=plupload]').each(function() {
+                $summaryScope.find('li[class^=plupload], .p3d-filelist-item').each(function() {
                         if (this.id) {
                                 fileScope[this.id] = true;
                         }
@@ -762,8 +809,17 @@ function motqnUpdateSummaryTotals($scope) {
                 }
         }
 
-        jQuery.each(p3d.analyse_queue, function(fileId, fileData) {
-                if (fileScope && !fileScope[fileId]) {
+	if (typeof p3d === 'undefined' || typeof p3d.analyse_queue === 'undefined') {
+		return;
+	}
+
+	var queueKeys = Object.keys(p3d.analyse_queue);
+
+	jQuery.each(queueKeys, function(_, fileId) {
+		var fileData = p3d.analyse_queue[fileId];
+		var scopeId = (fileData && fileData.id) ? fileData.id : fileId;
+
+                if (fileScope && !fileScope[scopeId]) {
                         return;
                 }
 
@@ -878,7 +934,7 @@ function motqnUpdateStatus($statusEl, message, state) {
                 }
         }
 
-        var fileId = $statusEl.closest('li[class^=plupload]').prop('id');
+        var fileId = motqnGetFileIdFromElement($statusEl);
         if (fileId && typeof(p3d.analyse_queue[fileId])!='undefined') {
                 if (typeof message !== 'undefined' && message !== null) {
                         p3d.analyse_queue[fileId].html_status = $statusEl.html();
@@ -890,7 +946,10 @@ function motqnUpdateStatus($statusEl, message, state) {
 }
 function p3dSaveComments(obj) {
 	var comments = jQuery(obj).val();
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 	if (typeof(p3d.analyse_queue[file_id])!='undefined') {
 		p3d.analyse_queue[file_id].comments=comments;
 	}
@@ -1008,7 +1067,10 @@ function p3dRepairCheckBulk (filename, server, obj) {
 	}
 
 	var printer_type = jQuery(obj).find('select[name=product_printer] option:checked').data('type')
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id')
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 	var repair = p3d.api_repair;
 	if (typeof(p3d.analyse_queue[file_id].triangulation_required) != 'undefined' && p3d.analyse_queue[file_id].triangulation_required == true) {
 		var repair = 'on';
@@ -1486,7 +1548,10 @@ p3d.analyse_queue[file_id].dim_x
 
 function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
 
-        var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+        var file_id = motqnGetFileIdFromElement(jQuery(obj));
+        if (!file_id) {
+                return;
+        }
         var fileData = p3d.analyse_queue[file_id];
 
         if (motqnHandleStaleAnalysis(file_id, analysisToken)) {
@@ -1641,7 +1706,10 @@ function p3dShowResponseBulk(obj, model_stats) {
         var html_thumb = '';
 
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+	var file_id = motqnGetFileIdFromElement(jQuery(obj));
+	if (!file_id) {
+		return;
+	}
 	if (p3d.price_num_decimals<0) price = p3dRoundPrice(model_stats.price);
 	else price = model_stats.price.toFixed(p3d.price_num_decimals);
 
@@ -1742,7 +1810,7 @@ function p3dShowResponseBulk(obj, model_stats) {
 	p3d.analyse_queue[file_id].dim_x=(model_stats.x_dim/10).toFixed(2);
 	p3d.analyse_queue[file_id].dim_y=(model_stats.y_dim/10).toFixed(2);
 	p3d.analyse_queue[file_id].dim_z=(model_stats.z_dim/10).toFixed(2);
-	jQuery(obj).closest('li[class^=plupload]').find('.plupload_info_icon').css('visibility', 'visible')
+	motqnGetFileListItem(jQuery(obj)).find('.plupload_info_icon').css('visibility', 'visible')
         var $model_info = jQuery('#'+file_id).find('.plupload_model_info');
         if ($model_info.length) {
                 $model_info.attr('data-state', 'ready');
@@ -1894,5 +1962,4 @@ function p3dCheckAllFinished() {
 jQuery(document).ready(function(){
 	p3dInitBulk();
 })
-
 
