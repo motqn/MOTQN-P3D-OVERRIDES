@@ -537,17 +537,44 @@ used as it is.
 
                 var $groupWrapper = jQuery('<div class="motqn-material-picker"></div>');
                 var $groupSelect = jQuery('<select class="p3d-dropdown-searchable-bulk motqn-material-picker__group"></select>');
-
-                if (placeholderText.length) {
-                        $groupSelect.append('<option value="">' + placeholderText + '</option>');
-                }
-                else {
-                        $groupSelect.append('<option value="">' + groupPlaceholderText + '</option>');
-                }
+                var initialValue = $select.val();
+                var fallbackGroupKey = '';
+                var fallbackValue = '';
+                var initialGroupKey = '';
 
                 for (var gi = 0; gi < materialGroups.length; gi++) {
                         var group = materialGroups[gi];
-                        $groupSelect.append('<option value="' + group.key + '">' + group.label + '</option>');
+
+                        if (!fallbackGroupKey) {
+                                fallbackGroupKey = group.key;
+                        }
+
+                        for (var oi = 0; oi < group.options.length; oi++) {
+                                var optionData = group.options[oi];
+
+                                if (!fallbackValue && !optionData.option.prop('disabled')) {
+                                        fallbackGroupKey = group.key;
+                                        fallbackValue = optionData.value;
+                                }
+
+                                if (initialValue && optionData.value === initialValue) {
+                                        initialGroupKey = group.key;
+                                }
+                        }
+                }
+
+                var defaultGroupSelection = initialGroupKey || fallbackGroupKey;
+
+                for (var gi = 0; gi < materialGroups.length; gi++) {
+                        var group = materialGroups[gi];
+                        var isSelectedGroup = group.key === defaultGroupSelection;
+                        var optionAttributes = ' value="' + group.key + '"';
+
+                        if (isSelectedGroup) {
+                                optionAttributes += ' selected="selected"';
+                        }
+
+                        $groupSelect.append('<option' + optionAttributes + '>' + group.label + '</option>');
                 }
 
                 $groupWrapper.append($groupSelect);
@@ -569,6 +596,19 @@ used as it is.
                 $select.after($groupWrapper);
 
                 var isSyncing = false;
+
+                function ensureDefaultSelection() {
+                        if ($select.val() || !fallbackValue) {
+                                return false;
+                        }
+
+                        isSyncing = true;
+                        $select.val(fallbackValue);
+                        $select.trigger('change');
+                        isSyncing = false;
+
+                        return true;
+                }
 
                 function renderColorsForGroup(groupKey, selectedValue) {
                         $colorsContainer.empty();
@@ -641,6 +681,10 @@ used as it is.
                         var currentValue = $select.val();
                         var matchedGroupKey = '';
 
+                        if (!currentValue && ensureDefaultSelection()) {
+                                return;
+                        }
+
                         for (var si = 0; si < materialGroups.length; si++) {
                                 var groupData = materialGroups[si];
 
@@ -665,9 +709,9 @@ used as it is.
                         }
                         else {
                                 if (!isSyncing) {
-                                        $groupSelect.val('');
+                                        $groupSelect.val(fallbackGroupKey);
                                 }
-                                renderColorsForGroup('', currentValue);
+                                renderColorsForGroup(fallbackGroupKey, currentValue);
                         }
                 }
 
@@ -688,6 +732,7 @@ used as it is.
                         observer.observe($select[0], { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled'] });
                 }
 
+                ensureDefaultSelection();
                 syncFromOriginal();
         }
 
