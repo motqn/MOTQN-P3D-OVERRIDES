@@ -1092,7 +1092,10 @@ used as it is.
                                                 var infill_attribute = $('#p3d_infills_bulk_template').html();
                                                 var postprocessing_attribute = $('#p3d_postprocessings_bulk_template').html();
                                                 var custom_attribute = $('#p3d_custom_attributes_bulk_template tbody').html();
-                                                var unit_attribute = $('#p3d_units_bulk_template').html();
+                                               var unit_attribute_template = $('#p3d_units_bulk_template').html() || '';
+                                               var $unit_template_wrapper = jQuery('<div>' + unit_attribute_template + '</div>');
+                                               $unit_template_wrapper.find('select').addClass('motqn-select motqn-select--unit-value');
+                                               var unit_attribute = $unit_template_wrapper.html();
                                                 var qty_label = 'Quantity';
 
                                                 if (typeof p3d.text_bulk_qty !== 'undefined') {
@@ -1216,7 +1219,7 @@ used as it is.
 
                                                 }
                                                 attributes += '<tr style="'+(p3d.show_scale!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_unit+'</td><td><div class="motqn-option-field motqn-option-field--unit">'+unit_attribute+'<span class="plupload_file_price-tag plupload_file_price-tag--unit"><span class="plupload_file_price-tag-label">Unit price</span><span class="plupload_file_price-tag-value">'+unit_price_display+'</span></span></div></td></tr>';
-                                                attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="motqn-option-field motqn-option-field--qty"><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div><span class="plupload_file_price-tag plupload_file_price-tag--total"><span class="plupload_file_price-tag-label">Total price</span><span class="plupload_file_price-tag-value">' + total_price_display + '</span></span></div></td></tr>';
+                                               attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="motqn-option-field motqn-option-field--qty"><div class="plupload_file_qty"><input class="motqn-input--qty-value" name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div><span class="plupload_file_price-tag plupload_file_price-tag--total"><span class="plupload_file_price-tag-label">Total price</span><span class="plupload_file_price-tag-value">' + total_price_display + '</span></span></div></td></tr>';
 
                                                 if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
                                                 //todo custom attrs

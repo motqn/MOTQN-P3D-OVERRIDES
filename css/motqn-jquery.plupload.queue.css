@@ -705,6 +705,16 @@
     -moz-appearance: auto;
 }
 
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_qty .motqn-input--qty-value {
+    width: 36px;
+    padding: 6px 6px;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload_file_qty select.motqn-select--unit-value {
+    min-width: 56px;
+    padding: 8px 10px;
+}
+
 .motqn-infill-slider__select {
     position: absolute;
     width: 1px;
