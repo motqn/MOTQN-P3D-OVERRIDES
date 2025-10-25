@@ -536,11 +536,41 @@ used as it is.
                 }
 
                 var $groupWrapper = jQuery('<div class="motqn-material-picker"></div>');
-                var $groupSelect = jQuery('<select class="p3d-dropdown-searchable-bulk motqn-material-picker__group"></select>');
+                var instructionsText = placeholderText.length ? placeholderText : groupPlaceholderText;
+                var $groupMessage = null;
+
+                if (instructionsText) {
+                        $groupMessage = jQuery('<p class="motqn-material-picker__message motqn-material-picker__groups-message"></p>').text(instructionsText);
+                        $groupWrapper.append($groupMessage);
+                }
+
+                var $groupButtons = jQuery('<div class="motqn-material-picker__groups" role="radiogroup"></div>');
+
+                if (groupPlaceholderText) {
+                        $groupButtons.attr('aria-label', groupPlaceholderText);
+                }
+
+                $groupWrapper.append($groupButtons);
+
                 var initialValue = $select.val();
                 var fallbackGroupKey = '';
                 var fallbackValue = '';
                 var initialGroupKey = '';
+                var currentGroupKey = '';
+
+                function groupHasEnabledOptions(groupData) {
+                        if (!groupData || !groupData.options || !groupData.options.length) {
+                                return false;
+                        }
+
+                        for (var hi = 0; hi < groupData.options.length; hi++) {
+                                if (!groupData.options[hi].option.prop('disabled')) {
+                                        return true;
+                                }
+                        }
+
+                        return false;
+                }
 
                 for (var gi = 0; gi < materialGroups.length; gi++) {
                         var group = materialGroups[gi];
@@ -564,20 +594,39 @@ used as it is.
                 }
 
                 var defaultGroupSelection = initialGroupKey || fallbackGroupKey;
+                currentGroupKey = defaultGroupSelection;
 
                 for (var gi = 0; gi < materialGroups.length; gi++) {
-                        var group = materialGroups[gi];
-                        var isSelectedGroup = group.key === defaultGroupSelection;
-                        var optionAttributes = ' value="' + group.key + '"';
+                        (function(groupData) {
+                                var $groupButton = jQuery('<button type="button" class="motqn-material-group-chip"></button>');
+                                var hasEnabledOptions = groupHasEnabledOptions(groupData);
 
-                        if (isSelectedGroup) {
-                                optionAttributes += ' selected="selected"';
-                        }
+                                $groupButton.attr('data-group', groupData.key);
+                                $groupButton.text(groupData.label);
 
-                        $groupSelect.append('<option' + optionAttributes + '>' + group.label + '</option>');
+                                if (defaultGroupSelection && groupData.key === defaultGroupSelection) {
+                                        $groupButton.addClass('is-selected').attr('aria-pressed', 'true');
+                                }
+                                else {
+                                        $groupButton.attr('aria-pressed', 'false');
+                                }
+
+                                if (!hasEnabledOptions) {
+                                        $groupButton.addClass('is-disabled').prop('disabled', true).attr('aria-disabled', 'true');
+                                }
+                                else {
+                                        $groupButton.on('click', function() {
+                                                if (jQuery(this).hasClass('is-disabled')) {
+                                                        return;
+                                                }
+
+                                                setGroupSelection(groupData.key, { selectedValue: $select.val() });
+                                        });
+                                }
+
+                                $groupButtons.append($groupButton);
+                        })(materialGroups[gi]);
                 }
-
-                $groupWrapper.append($groupSelect);
 
                 var $materialRow = $materialCell.closest('tr');
                 var $colorsRow = $materialRow.next('.motqn-material-picker__colors-row');
@@ -597,6 +646,50 @@ used as it is.
 
                 var isSyncing = false;
 
+                function refreshGroupAvailability() {
+                        var enabledGroups = [];
+
+                        $groupButtons.children('.motqn-material-group-chip').each(function() {
+                                var $btn = jQuery(this);
+                                var groupKey = $btn.attr('data-group');
+                                var hasEnabled = groupHasEnabledOptions(groupLookup[groupKey]);
+
+                                if (hasEnabled) {
+                                        enabledGroups.push(groupKey);
+                                        $btn.removeClass('is-disabled').prop('disabled', false).removeAttr('aria-disabled');
+                                }
+                                else {
+                                        $btn.addClass('is-disabled').prop('disabled', true).attr('aria-disabled', 'true');
+                                        $btn.attr('aria-pressed', 'false');
+                                        $btn.removeClass('is-selected');
+                                }
+                        });
+
+                        return enabledGroups;
+                }
+
+                function updateGroupButtons(selectedGroupKey) {
+                        $groupButtons.children('.motqn-material-group-chip').each(function() {
+                                var $btn = jQuery(this);
+                                var isSelected = !!selectedGroupKey && $btn.attr('data-group') === selectedGroupKey && !$btn.hasClass('is-disabled');
+
+                                $btn.toggleClass('is-selected', isSelected);
+
+                                if (!$btn.hasClass('is-disabled')) {
+                                        $btn.attr('aria-pressed', isSelected ? 'true' : 'false');
+                                }
+                        });
+
+                        if ($groupMessage) {
+                                if (selectedGroupKey) {
+                                        $groupMessage.hide();
+                                }
+                                else {
+                                        $groupMessage.show();
+                                }
+                        }
+                }
+
                 function ensureDefaultSelection() {
                         if ($select.val() || !fallbackValue) {
                                 return false;
@@ -612,6 +705,7 @@ used as it is.
 
                 function renderColorsForGroup(groupKey, selectedValue) {
                         $colorsContainer.empty();
+                        updateGroupButtons(groupKey);
 
                         if (!groupKey || !groupLookup[groupKey]) {
                                 $colorsContainer.append('<p class="motqn-material-picker__message">' + selectGroupMessage + '</p>');
@@ -677,6 +771,33 @@ used as it is.
                         }
                 }
 
+                function setGroupSelection(groupKey, options) {
+                        options = options || {};
+
+                        var enabledGroups = refreshGroupAvailability();
+
+                        if (groupKey && enabledGroups.indexOf(groupKey) === -1) {
+                                groupKey = '';
+                        }
+
+                        if (!groupKey && enabledGroups.length) {
+                                groupKey = enabledGroups[0];
+                        }
+
+                        currentGroupKey = groupKey;
+
+                        updateGroupButtons(groupKey);
+
+                        if (!options.silent) {
+                                var selectedValue = (typeof options.selectedValue !== 'undefined') ? options.selectedValue : $select.val();
+                                renderColorsForGroup(groupKey, selectedValue);
+                        }
+
+                        return currentGroupKey;
+                }
+
+                setGroupSelection(currentGroupKey, { silent: true, selectedValue: $select.val() });
+
                 function syncFromOriginal() {
                         var currentValue = $select.val();
                         var matchedGroupKey = '';
@@ -701,24 +822,15 @@ used as it is.
                         }
 
                         if (matchedGroupKey) {
-                                if (!isSyncing && $groupSelect.val() !== matchedGroupKey) {
-                                        $groupSelect.val(matchedGroupKey);
-                                }
-
-                                renderColorsForGroup(matchedGroupKey, currentValue);
+                                setGroupSelection(matchedGroupKey, { selectedValue: currentValue });
+                        }
+                        else if (currentGroupKey) {
+                                setGroupSelection(currentGroupKey, { selectedValue: currentValue });
                         }
                         else {
-                                if (!isSyncing) {
-                                        $groupSelect.val(fallbackGroupKey);
-                                }
-                                renderColorsForGroup(fallbackGroupKey, currentValue);
+                                setGroupSelection(fallbackGroupKey, { selectedValue: currentValue });
                         }
                 }
-
-                $groupSelect.on('change', function() {
-                        var selectedGroup = jQuery(this).val();
-                        renderColorsForGroup(selectedGroup, $select.val());
-                });
 
                 $select.on('change.motqnMaterialPicker', function() {
                         syncFromOriginal();
@@ -726,7 +838,8 @@ used as it is.
 
                 if (typeof MutationObserver !== 'undefined') {
                         var observer = new MutationObserver(function() {
-                                renderColorsForGroup($groupSelect.val(), $select.val());
+                                var activeGroup = setGroupSelection(currentGroupKey || fallbackGroupKey, { selectedValue: $select.val(), silent: true });
+                                renderColorsForGroup(activeGroup, $select.val());
                         });
 
                         observer.observe($select[0], { subtree: true, childList: true, attributes: true, attributeFilter: ['disabled'] });
