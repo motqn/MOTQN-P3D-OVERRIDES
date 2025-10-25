@@ -1437,9 +1437,28 @@ function p3dAnalyseModelBulk(file_id) {
         }
 
         var fileData = p3d.analyse_queue[file_id];
-        var currentSignature = motqnGenerateAnalysisSignature(file_id, fileData);
 
-        if (fileData && fileData.analyse_status === 1 && fileData.uploaded && fileData.last_analysis_signature === currentSignature) {
+        if (!fileData || (!fileData.server_name && !fileData.uploaded && fileData.status !== 5)) {
+                return;
+        }
+
+        var currentSignature = motqnGenerateAnalysisSignature(file_id, fileData);
+        var lastSignature = fileData ? fileData.last_analysis_signature : null;
+        var pendingSignature = fileData ? fileData.pending_analysis_signature : null;
+
+        if (currentSignature && lastSignature === currentSignature && (!pendingSignature || pendingSignature === lastSignature)) {
+                if (fileData.analyse_status !== 1) {
+                        fileData.analyse_status = 1;
+                }
+                delete fileData.pending_analysis_signature;
+                return;
+        }
+
+        if (pendingSignature && pendingSignature === currentSignature) {
+                return;
+        }
+
+        if (fileData && fileData.analyse_status === 1 && fileData.uploaded && lastSignature === currentSignature) {
                 return;
         }
 
@@ -1481,12 +1500,33 @@ function p3dScheduleAutoAnalyse() {
 function p3dHasPendingBulkAnalysis() {
         var pending = false;
 
-        jQuery.each(Object.values(p3d.analyse_queue), function(index, value) {
-                if (!value || !value.uploaded) {
+        jQuery.each(Object.keys(p3d.analyse_queue), function(index, fileId) {
+                var fileData = p3d.analyse_queue[fileId];
+
+                if (!fileData || (!fileData.server_name && !fileData.uploaded && fileData.status !== 5)) {
                         return;
                 }
 
-                if (typeof(value.analyse_status)!='undefined' && value.analyse_status===0) {
+                if (typeof(fileData.analyse_status)!='undefined' && fileData.analyse_status===0) {
+                        var lastSignature = fileData.last_analysis_signature || null;
+                        var pendingSignature = fileData.pending_analysis_signature || null;
+
+                        if (lastSignature) {
+                                var currentSignature = motqnGenerateAnalysisSignature(fileId, fileData);
+
+                                if (currentSignature && currentSignature === lastSignature && (!pendingSignature || pendingSignature === lastSignature)) {
+                                        fileData.analyse_status = 1;
+                                        delete fileData.pending_analysis_signature;
+
+                                        var $item = jQuery('#' + fileId);
+                                        if ($item.length) {
+                                                motqnUpdateStatus($item.find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
+                                        }
+
+                                        return;
+                                }
+                        }
+
                         pending = true;
                         return false;
                 }
