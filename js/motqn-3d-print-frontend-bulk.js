@@ -882,77 +882,82 @@ function motqnResetFilePricing(fileId) {
 }
 
 function motqnGenerateAnalysisSignature(fileId, fileData) {
-        var $item = jQuery('#' + fileId);
-
-        if (!$item.length) {
-                return null;
-        }
-
         var signature = {};
 
-        var printerId = $item.find('select[name=product_printer]').val();
-        var materialId = $item.find('select[name=product_filament]').val();
-        var infillValue = $item.find('select[name=product_infill]').val();
-        var infillId = $item.find('select[name=product_infill] option:selected').data('infill-id');
-        var unitValue = $item.find('select[name=product_unit]').val();
-        var postProcessing = $item.find('select[name=product_postprocessing]').val();
-
-        if (typeof printerId !== 'undefined') {
-                signature.printer = printerId;
-        }
-        if (typeof materialId !== 'undefined') {
-                signature.material = materialId;
-        }
-        if (typeof infillValue !== 'undefined') {
-                signature.infill = infillValue;
-        }
-        if (typeof infillId !== 'undefined') {
-                signature.infill_id = infillId;
-        }
-        if (typeof unitValue !== 'undefined') {
-                signature.unit = unitValue;
-        }
-        if (typeof postProcessing !== 'undefined') {
-                signature.postprocessing = postProcessing;
-        }
-
-        var cuttingInstructions = [];
-        $item.find('select[name^=p3d_cutting_instructions]').each(function() {
-                var colorKey = jQuery(this).prop('name');
-                var value = jQuery(this).val();
-
-                cuttingInstructions.push({
-                        key: colorKey,
-                        value: value
-                });
-        });
-
-        if (cuttingInstructions.length) {
-                cuttingInstructions.sort(function(a, b) {
-                        return a.key.localeCompare(b.key);
-                });
-                signature.cutting = cuttingInstructions;
-        }
-
-        var customAttributes = [];
-        $item.find('select[name^=attribute_pa]').each(function() {
-                var attributeName = jQuery(this).data('id');
-                var attributeValue = jQuery(this).val();
-
-                customAttributes.push({
-                        name: attributeName,
-                        value: attributeValue
-                });
-        });
-
-        if (customAttributes.length) {
-                customAttributes.sort(function(a, b) {
-                        return (a.name + '').localeCompare(b.name + '');
-                });
-                signature.custom_attributes = customAttributes;
-        }
-
         if (fileData) {
+                if (typeof fileData.printer_id !== 'undefined') {
+                        signature.printer = fileData.printer_id;
+                }
+                if (typeof fileData.material_id !== 'undefined') {
+                        signature.material = fileData.material_id;
+                }
+                if (typeof fileData.infill !== 'undefined') {
+                        signature.infill = fileData.infill;
+                }
+                if (typeof fileData.infill_id !== 'undefined') {
+                        signature.infill_id = fileData.infill_id;
+                }
+                if (typeof fileData.unit !== 'undefined') {
+                        signature.unit = fileData.unit;
+                }
+                if (typeof fileData.postprocessing_id !== 'undefined') {
+                        signature.postprocessing = fileData.postprocessing_id;
+                }
+
+                if (typeof fileData.cutting_instructions !== 'undefined' && fileData.cutting_instructions !== null) {
+                        var storedInstructions = [];
+
+                        if (Array.isArray(fileData.cutting_instructions)) {
+                                storedInstructions = fileData.cutting_instructions;
+                        }
+                        else if (typeof fileData.cutting_instructions === 'string') {
+                                var instructionsList = fileData.cutting_instructions.split(',');
+                                jQuery.each(instructionsList, function(_, instruction) {
+                                        if (!instruction.length) {
+                                                return;
+                                        }
+
+                                        var parts = instruction.split('=');
+                                        var colorKey = parts[0];
+                                        var value = parts.length > 1 ? parts[1] : '';
+
+                                        storedInstructions.push({
+                                                key: "p3d_cutting_instructions['" + colorKey + "']",
+                                                value: value
+                                        });
+                                });
+                        }
+
+                        if (storedInstructions.length) {
+                                storedInstructions.sort(function(a, b) {
+                                        return (a.key + '').localeCompare(b.key + '');
+                                });
+                                signature.cutting = storedInstructions;
+                        }
+                }
+
+                if (typeof fileData.custom_attributes !== 'undefined' && fileData.custom_attributes !== null) {
+                        var storedCustomAttributes = [];
+
+                        jQuery.each(fileData.custom_attributes, function(name, value) {
+                                if (typeof value === 'undefined' || value === null || value === '') {
+                                        return;
+                                }
+
+                                storedCustomAttributes.push({
+                                        name: name,
+                                        value: value
+                                });
+                        });
+
+                        if (storedCustomAttributes.length) {
+                                storedCustomAttributes.sort(function(a, b) {
+                                        return (a.name + '').localeCompare(b.name + '');
+                                });
+                                signature.custom_attributes = storedCustomAttributes;
+                        }
+                }
+
                 if (typeof fileData.server_name !== 'undefined') {
                         signature.server_name = fileData.server_name;
                 }
@@ -974,6 +979,80 @@ function motqnGenerateAnalysisSignature(fileId, fileData) {
                 if (typeof fileData.triangulation_required !== 'undefined') {
                         signature.triangulation_required = !!fileData.triangulation_required;
                 }
+        }
+
+        var $item = jQuery('#' + fileId);
+
+        if ($item.length) {
+                var printerId = $item.find('select[name=product_printer]').val();
+                var materialId = $item.find('select[name=product_filament]').val();
+                var infillValue = $item.find('select[name=product_infill]').val();
+                var infillId = $item.find('select[name=product_infill] option:selected').data('infill-id');
+                var unitValue = $item.find('select[name=product_unit]').val();
+                var postProcessing = $item.find('select[name=product_postprocessing]').val();
+
+                if (typeof printerId !== 'undefined' && printerId !== null && printerId !== '' && typeof signature.printer === 'undefined') {
+                        signature.printer = printerId;
+                }
+                if (typeof materialId !== 'undefined' && materialId !== null && materialId !== '' && typeof signature.material === 'undefined') {
+                        signature.material = materialId;
+                }
+                if (typeof infillValue !== 'undefined' && infillValue !== null && infillValue !== '' && typeof signature.infill === 'undefined') {
+                        signature.infill = infillValue;
+                }
+                if (typeof infillId !== 'undefined' && infillId !== null && infillId !== '' && typeof signature.infill_id === 'undefined') {
+                        signature.infill_id = infillId;
+                }
+                if (typeof unitValue !== 'undefined' && unitValue !== null && unitValue !== '' && typeof signature.unit === 'undefined') {
+                        signature.unit = unitValue;
+                }
+                if (typeof postProcessing !== 'undefined' && postProcessing !== null && postProcessing !== '' && typeof signature.postprocessing === 'undefined') {
+                        signature.postprocessing = postProcessing;
+                }
+
+                if (typeof signature.cutting === 'undefined') {
+                        var cuttingInstructions = [];
+                        $item.find('select[name^=p3d_cutting_instructions]').each(function() {
+                                var colorKey = jQuery(this).prop('name');
+                                var value = jQuery(this).val();
+
+                                cuttingInstructions.push({
+                                        key: colorKey,
+                                        value: value
+                                });
+                        });
+
+                        if (cuttingInstructions.length) {
+                                cuttingInstructions.sort(function(a, b) {
+                                        return (a.key + '').localeCompare(b.key + '');
+                                });
+                                signature.cutting = cuttingInstructions;
+                        }
+                }
+
+                if (typeof signature.custom_attributes === 'undefined') {
+                        var customAttributes = [];
+                        $item.find('select[name^=attribute_pa]').each(function() {
+                                var attributeName = jQuery(this).data('id');
+                                var attributeValue = jQuery(this).val();
+
+                                customAttributes.push({
+                                        name: attributeName,
+                                        value: attributeValue
+                                });
+                        });
+
+                        if (customAttributes.length) {
+                                customAttributes.sort(function(a, b) {
+                                        return (a.name + '').localeCompare(b.name + '');
+                                });
+                                signature.custom_attributes = customAttributes;
+                        }
+                }
+        }
+
+        if (!$item.length && !Object.keys(signature).length) {
+                return null;
         }
 
         return JSON.stringify(signature);
