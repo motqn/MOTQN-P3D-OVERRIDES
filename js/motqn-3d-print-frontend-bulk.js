@@ -11,6 +11,7 @@ p3d.all_finished = false;
 p3d.image_height=5;
 p3d.image_map=1;
 p3d.auto_analyse_timeout = null;
+p3d.refresh_intervals = {};
 
 
 function p3dInitBulk() {
@@ -69,6 +70,7 @@ jQuery(function() {
                                         for (var i=0;i<files.length;i++) {
                                                 var file_id = files[i].id
                                                 if (typeof(p3d.analyse_queue[file_id])!='undefined') {
+                                                        motqnClearAnalysisInterval(file_id);
                                                         delete p3d.analyse_queue[file_id];
                                                 }
                                         }
@@ -993,6 +995,21 @@ function motqnIsStaleAnalysis(fileId, analysisToken) {
         return p3d.analyse_queue[fileId].analysisToken !== analysisToken;
 }
 
+function motqnClearAnalysisInterval(fileId) {
+        if (!fileId || typeof p3d === 'undefined') {
+                return;
+        }
+
+        if (typeof p3d.refresh_intervals === 'undefined') {
+                p3d.refresh_intervals = {};
+        }
+
+        if (p3d.refresh_intervals[fileId]) {
+                clearInterval(p3d.refresh_intervals[fileId]);
+                delete p3d.refresh_intervals[fileId];
+        }
+}
+
 function motqnHandleStaleAnalysis(fileId, analysisToken) {
         if (!motqnIsStaleAnalysis(fileId, analysisToken)) {
                 return false;
@@ -1005,10 +1022,7 @@ function motqnHandleStaleAnalysis(fileId, analysisToken) {
 
         p3d.analysing = false;
 
-        if (p3d.refresh_interval) {
-                clearInterval(p3d.refresh_interval);
-                p3d.refresh_interval = null;
-        }
+        motqnClearAnalysisInterval(fileId);
 
         p3dScheduleAutoAnalyse();
 
@@ -1359,7 +1373,7 @@ function p3dAnalyseModelBulk(file_id) {
         fileData.analysisToken++;
         fileData.pending_analysis_signature = currentSignature;
 
-        clearInterval(p3d.refresh_interval);
+        motqnClearAnalysisInterval(file_id);
 
         fileData.analyse_status = 0;
         fileData.new_pricing = false;
@@ -1605,9 +1619,14 @@ p3d.analyse_queue[file_id].dim_x
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 10%', 'analysing');
                                 fileData.analyse_status = 2;
 
-                                p3d.refresh_interval = setInterval(function(){
+                                var refreshInterval = setInterval(function(){
                                     p3danalyseCheckBulk(filename, server, obj, analysisToken);
                                 }, 3000);
+                                if (typeof p3d.refresh_intervals === 'undefined') {
+                                        p3d.refresh_intervals = {};
+                                }
+                                motqnClearAnalysisInterval(file_id);
+                                p3d.refresh_intervals[file_id] = refreshInterval;
 
 
                         }
@@ -1634,7 +1653,7 @@ p3d.analyse_queue[file_id].dim_x
                                 p3dCheckAllFinished();
 
                                 motqnUpdateStatus(price_field, p3d.text_bulk_analysing+' 100%', 'complete');
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
 
                         else if (data.status == '0') { //failed
@@ -1770,7 +1789,7 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
                                                 fileData.new_pricing = 'request';
                                 }
                                 p3dCheckAllFinished();
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
                         else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
@@ -1804,7 +1823,7 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
 
                                 p3dCheckAllFinished();
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
                         if (data.status=='2') {
                                 fileData.analyse_status = 2;
