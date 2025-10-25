@@ -490,6 +490,61 @@
     gap: 6px;
 }
 
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(15, 23, 42, 0.6);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-value {
+    margin-left: auto;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.01em;
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--weight {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.28);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--dimensions {
+    background: linear-gradient(135deg, #0ea5e9 0%, #22d3ee 100%);
+    box-shadow: 0 18px 40px rgba(14, 165, 233, 0.24);
+}
+
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--weight .plupload-model-info-label,
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--weight .plupload-model-info-value,
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--dimensions .plupload-model-info-label,
+.motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--dimensions .plupload-model-info-value {
+    color: #ffffff;
+}
+
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_status::before {
     content: "Status";
     display: inline-flex;

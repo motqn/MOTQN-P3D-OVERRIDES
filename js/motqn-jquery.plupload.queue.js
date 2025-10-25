@@ -138,6 +138,105 @@ used as it is.
                 return hex;
         }
 
+        window.motqnNormalizeModelInfo = function(html) {
+                if (typeof html === 'undefined' || html === null) {
+                        return '';
+                }
+
+                var htmlString = typeof html === 'string' ? html : '' + html;
+
+                if (!htmlString.length) {
+                        return htmlString;
+                }
+
+                var $wrapper = $('<div>').html(htmlString);
+
+                $wrapper.find('.p3d-stats-thumbnail').remove();
+                $wrapper.find('a.stats_plupload_model_image_link').remove();
+                $wrapper.find('img.stats_plupload_model_image').remove();
+
+                var $table = $wrapper.find('table').first();
+
+                if ($table.length) {
+                        var $infoGrid = $('<div class="plupload-model-info-grid" />');
+
+                        $table.find('tr').each(function() {
+                                var $rowCells = $(this).find('td, th');
+
+                                if (!$rowCells.length) {
+                                        return;
+                                }
+
+                                var label = $.trim($rowCells.first().text());
+                                var $label = $('<span class="plupload-model-info-label" />');
+
+                                if (label.length) {
+                                        $label.text(label);
+                                }
+
+                                var $value = $('<span class="plupload-model-info-value" />');
+
+                                $rowCells.slice(1).each(function() {
+                                        var $cell = $(this);
+
+                                        if ($cell.contents().length) {
+                                                $value.append($cell.contents().clone());
+                                        } else {
+                                                var textValue = $.trim($cell.text());
+
+                                                if (textValue.length) {
+                                                        if ($value.contents().length) {
+                                                                $value.append(document.createTextNode(' '));
+                                                        }
+
+                                                        $value.append(document.createTextNode(textValue));
+                                                }
+                                        }
+                                });
+
+                                if (!$value.contents().length) {
+                                        var fallback = $.trim($rowCells.slice(1).text());
+
+                                        if (fallback.length) {
+                                                $value.text(fallback);
+                                        }
+                                }
+
+                                if (!label.length && !$value.contents().length) {
+                                        return;
+                                }
+
+                                var $item = $('<div class="plupload-model-info-row" />');
+
+                                if (label.length) {
+                                        $item.append($label);
+                                }
+
+                                $item.append($value);
+
+                                var normalizedLabel = label.toLowerCase();
+
+                                if (normalizedLabel.indexOf('weight') !== -1) {
+                                        $item.addClass('plupload-model-info-row--weight');
+                                }
+
+                                if (normalizedLabel.indexOf('dimension') !== -1 || normalizedLabel.indexOf('size') !== -1) {
+                                        $item.addClass('plupload-model-info-row--dimensions');
+                                }
+
+                                $infoGrid.append($item);
+                        });
+
+                        if ($infoGrid.children().length) {
+                                $table.replaceWith($infoGrid);
+                        } else {
+                                $table.remove();
+                        }
+                }
+
+                return $wrapper.html();
+        };
+
         function motqnSyncInfillSliderFromSelect($select) {
                 if (!$select || !$select.length) {
                         return;
@@ -859,6 +958,7 @@ used as it is.
                                                 var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
                                                 var html_stats = 'Click Calculate button to show stats';
+                                                var default_stats_message = html_stats;
                                                 var has_model_stats = false;
                                                 var stats_style = '';
                                                 var html_thumb = '';
@@ -885,13 +985,18 @@ used as it is.
                                                         }
                                                         if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
                                                                 html_stats = p3d.analyse_queue[file.id].html_stats;
-                                                                stats_style = 'visibility:visible;';
-                                                                has_model_stats = true;
+                                                                if (typeof window.motqnNormalizeModelInfo === 'function') {
+                                                                        html_stats = window.motqnNormalizeModelInfo(html_stats);
+                                                                        p3d.analyse_queue[file.id].html_stats = html_stats;
+                                                                }
+                                                                if (typeof html_stats === 'string' && html_stats.replace(/<[^>]*>/g, '').trim().length) {
+                                                                        has_model_stats = true;
+                                                                        stats_style = 'visibility:visible;';
+                                                                } else {
+                                                                        stats_style = '';
+                                                                        html_stats = default_stats_message;
+                                                                }
                                                         }
-							if (typeof(p3d.analyse_queue[file.id].html_stats)!='undefined') {
-								html_stats = p3d.analyse_queue[file.id].html_stats;
-								stats_style = 'visibility:visible;';
-							}
 							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
 								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
 							}
@@ -928,7 +1033,7 @@ used as it is.
                                                                         '</div>' +
                                                                         '<div class="motqn-file-card__details">' +
                                                                                 '<div class="motqn-file-card__header">' +
-                                                                                        '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" onclick="jQuery(\'.plupload-overlay\').show();" href="#plupload-popup-'+file.id+'" class="plupload-button" style="'+stats_style+'"></a></span></div>' +
+                                                                                        '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" href="#" onclick="return false;" class="plupload-button" style="'+stats_style+'"></a></span></div>' +
                                                                                         '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
                                                                                 '</div>' +
                                                                                 '<div class="motqn-file-card__options">' +
@@ -947,17 +1052,7 @@ used as it is.
                                                                         '</div>' +
                                                                 '</div>' +
                                                                 inputHTML +
-                                                        '</li>'+
-                                                        '<div id="plupload-popup-'+file.id+'" class="plupload-overlay">'+
-                                                                '<div class="plupload-popup">'+
-                                                                        '<h2>Stats</h2>'+
-									'<a class="plupload-close" onclick="jQuery(\'.plupload-overlay\').hide();" href="#p3d-bulk-uploader">&times;</a>'+
-									'<div class="plupload-content">'+
-                                                                        html_stats+
-									html_stats+
-									'</div>'+
-								'</div>'+
-                                                        '</div>'
+                                                        '</li>'
                                                 );
 
                                                 var $newListItem = $('#' + file.id, fileList);
