@@ -11,6 +11,7 @@ p3d.all_finished = false;
 p3d.image_height=5;
 p3d.image_map=1;
 p3d.auto_analyse_timeout = null;
+p3d.refresh_intervals = {};
 
 
 function p3dInitBulk() {
@@ -69,6 +70,7 @@ jQuery(function() {
                                         for (var i=0;i<files.length;i++) {
                                                 var file_id = files[i].id
                                                 if (typeof(p3d.analyse_queue[file_id])!='undefined') {
+                                                        motqnClearAnalysisInterval(file_id);
                                                         delete p3d.analyse_queue[file_id];
                                                 }
                                         }
@@ -880,77 +882,82 @@ function motqnResetFilePricing(fileId) {
 }
 
 function motqnGenerateAnalysisSignature(fileId, fileData) {
-        var $item = jQuery('#' + fileId);
-
-        if (!$item.length) {
-                return null;
-        }
-
         var signature = {};
 
-        var printerId = $item.find('select[name=product_printer]').val();
-        var materialId = $item.find('select[name=product_filament]').val();
-        var infillValue = $item.find('select[name=product_infill]').val();
-        var infillId = $item.find('select[name=product_infill] option:selected').data('infill-id');
-        var unitValue = $item.find('select[name=product_unit]').val();
-        var postProcessing = $item.find('select[name=product_postprocessing]').val();
-
-        if (typeof printerId !== 'undefined') {
-                signature.printer = printerId;
-        }
-        if (typeof materialId !== 'undefined') {
-                signature.material = materialId;
-        }
-        if (typeof infillValue !== 'undefined') {
-                signature.infill = infillValue;
-        }
-        if (typeof infillId !== 'undefined') {
-                signature.infill_id = infillId;
-        }
-        if (typeof unitValue !== 'undefined') {
-                signature.unit = unitValue;
-        }
-        if (typeof postProcessing !== 'undefined') {
-                signature.postprocessing = postProcessing;
-        }
-
-        var cuttingInstructions = [];
-        $item.find('select[name^=p3d_cutting_instructions]').each(function() {
-                var colorKey = jQuery(this).prop('name');
-                var value = jQuery(this).val();
-
-                cuttingInstructions.push({
-                        key: colorKey,
-                        value: value
-                });
-        });
-
-        if (cuttingInstructions.length) {
-                cuttingInstructions.sort(function(a, b) {
-                        return a.key.localeCompare(b.key);
-                });
-                signature.cutting = cuttingInstructions;
-        }
-
-        var customAttributes = [];
-        $item.find('select[name^=attribute_pa]').each(function() {
-                var attributeName = jQuery(this).data('id');
-                var attributeValue = jQuery(this).val();
-
-                customAttributes.push({
-                        name: attributeName,
-                        value: attributeValue
-                });
-        });
-
-        if (customAttributes.length) {
-                customAttributes.sort(function(a, b) {
-                        return (a.name + '').localeCompare(b.name + '');
-                });
-                signature.custom_attributes = customAttributes;
-        }
-
         if (fileData) {
+                if (typeof fileData.printer_id !== 'undefined') {
+                        signature.printer = fileData.printer_id;
+                }
+                if (typeof fileData.material_id !== 'undefined') {
+                        signature.material = fileData.material_id;
+                }
+                if (typeof fileData.infill !== 'undefined') {
+                        signature.infill = fileData.infill;
+                }
+                if (typeof fileData.infill_id !== 'undefined') {
+                        signature.infill_id = fileData.infill_id;
+                }
+                if (typeof fileData.unit !== 'undefined') {
+                        signature.unit = fileData.unit;
+                }
+                if (typeof fileData.postprocessing_id !== 'undefined') {
+                        signature.postprocessing = fileData.postprocessing_id;
+                }
+
+                if (typeof fileData.cutting_instructions !== 'undefined' && fileData.cutting_instructions !== null) {
+                        var storedInstructions = [];
+
+                        if (Array.isArray(fileData.cutting_instructions)) {
+                                storedInstructions = fileData.cutting_instructions;
+                        }
+                        else if (typeof fileData.cutting_instructions === 'string') {
+                                var instructionsList = fileData.cutting_instructions.split(',');
+                                jQuery.each(instructionsList, function(_, instruction) {
+                                        if (!instruction.length) {
+                                                return;
+                                        }
+
+                                        var parts = instruction.split('=');
+                                        var colorKey = parts[0];
+                                        var value = parts.length > 1 ? parts[1] : '';
+
+                                        storedInstructions.push({
+                                                key: "p3d_cutting_instructions['" + colorKey + "']",
+                                                value: value
+                                        });
+                                });
+                        }
+
+                        if (storedInstructions.length) {
+                                storedInstructions.sort(function(a, b) {
+                                        return (a.key + '').localeCompare(b.key + '');
+                                });
+                                signature.cutting = storedInstructions;
+                        }
+                }
+
+                if (typeof fileData.custom_attributes !== 'undefined' && fileData.custom_attributes !== null) {
+                        var storedCustomAttributes = [];
+
+                        jQuery.each(fileData.custom_attributes, function(name, value) {
+                                if (typeof value === 'undefined' || value === null || value === '') {
+                                        return;
+                                }
+
+                                storedCustomAttributes.push({
+                                        name: name,
+                                        value: value
+                                });
+                        });
+
+                        if (storedCustomAttributes.length) {
+                                storedCustomAttributes.sort(function(a, b) {
+                                        return (a.name + '').localeCompare(b.name + '');
+                                });
+                                signature.custom_attributes = storedCustomAttributes;
+                        }
+                }
+
                 if (typeof fileData.server_name !== 'undefined') {
                         signature.server_name = fileData.server_name;
                 }
@@ -974,6 +981,80 @@ function motqnGenerateAnalysisSignature(fileId, fileData) {
                 }
         }
 
+        var $item = jQuery('#' + fileId);
+
+        if ($item.length) {
+                var printerId = $item.find('select[name=product_printer]').val();
+                var materialId = $item.find('select[name=product_filament]').val();
+                var infillValue = $item.find('select[name=product_infill]').val();
+                var infillId = $item.find('select[name=product_infill] option:selected').data('infill-id');
+                var unitValue = $item.find('select[name=product_unit]').val();
+                var postProcessing = $item.find('select[name=product_postprocessing]').val();
+
+                if (typeof printerId !== 'undefined' && printerId !== null && printerId !== '' && typeof signature.printer === 'undefined') {
+                        signature.printer = printerId;
+                }
+                if (typeof materialId !== 'undefined' && materialId !== null && materialId !== '' && typeof signature.material === 'undefined') {
+                        signature.material = materialId;
+                }
+                if (typeof infillValue !== 'undefined' && infillValue !== null && infillValue !== '' && typeof signature.infill === 'undefined') {
+                        signature.infill = infillValue;
+                }
+                if (typeof infillId !== 'undefined' && infillId !== null && infillId !== '' && typeof signature.infill_id === 'undefined') {
+                        signature.infill_id = infillId;
+                }
+                if (typeof unitValue !== 'undefined' && unitValue !== null && unitValue !== '' && typeof signature.unit === 'undefined') {
+                        signature.unit = unitValue;
+                }
+                if (typeof postProcessing !== 'undefined' && postProcessing !== null && postProcessing !== '' && typeof signature.postprocessing === 'undefined') {
+                        signature.postprocessing = postProcessing;
+                }
+
+                if (typeof signature.cutting === 'undefined') {
+                        var cuttingInstructions = [];
+                        $item.find('select[name^=p3d_cutting_instructions]').each(function() {
+                                var colorKey = jQuery(this).prop('name');
+                                var value = jQuery(this).val();
+
+                                cuttingInstructions.push({
+                                        key: colorKey,
+                                        value: value
+                                });
+                        });
+
+                        if (cuttingInstructions.length) {
+                                cuttingInstructions.sort(function(a, b) {
+                                        return (a.key + '').localeCompare(b.key + '');
+                                });
+                                signature.cutting = cuttingInstructions;
+                        }
+                }
+
+                if (typeof signature.custom_attributes === 'undefined') {
+                        var customAttributes = [];
+                        $item.find('select[name^=attribute_pa]').each(function() {
+                                var attributeName = jQuery(this).data('id');
+                                var attributeValue = jQuery(this).val();
+
+                                customAttributes.push({
+                                        name: attributeName,
+                                        value: attributeValue
+                                });
+                        });
+
+                        if (customAttributes.length) {
+                                customAttributes.sort(function(a, b) {
+                                        return (a.name + '').localeCompare(b.name + '');
+                                });
+                                signature.custom_attributes = customAttributes;
+                        }
+                }
+        }
+
+        if (!$item.length && !Object.keys(signature).length) {
+                return null;
+        }
+
         return JSON.stringify(signature);
 }
 
@@ -993,6 +1074,21 @@ function motqnIsStaleAnalysis(fileId, analysisToken) {
         return p3d.analyse_queue[fileId].analysisToken !== analysisToken;
 }
 
+function motqnClearAnalysisInterval(fileId) {
+        if (!fileId || typeof p3d === 'undefined') {
+                return;
+        }
+
+        if (typeof p3d.refresh_intervals === 'undefined') {
+                p3d.refresh_intervals = {};
+        }
+
+        if (p3d.refresh_intervals[fileId]) {
+                clearInterval(p3d.refresh_intervals[fileId]);
+                delete p3d.refresh_intervals[fileId];
+        }
+}
+
 function motqnHandleStaleAnalysis(fileId, analysisToken) {
         if (!motqnIsStaleAnalysis(fileId, analysisToken)) {
                 return false;
@@ -1005,10 +1101,7 @@ function motqnHandleStaleAnalysis(fileId, analysisToken) {
 
         p3d.analysing = false;
 
-        if (p3d.refresh_interval) {
-                clearInterval(p3d.refresh_interval);
-                p3d.refresh_interval = null;
-        }
+        motqnClearAnalysisInterval(fileId);
 
         p3dScheduleAutoAnalyse();
 
@@ -1359,7 +1452,7 @@ function p3dAnalyseModelBulk(file_id) {
         fileData.analysisToken++;
         fileData.pending_analysis_signature = currentSignature;
 
-        clearInterval(p3d.refresh_interval);
+        motqnClearAnalysisInterval(file_id);
 
         fileData.analyse_status = 0;
         fileData.new_pricing = false;
@@ -1605,9 +1698,14 @@ p3d.analyse_queue[file_id].dim_x
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 10%', 'analysing');
                                 fileData.analyse_status = 2;
 
-                                p3d.refresh_interval = setInterval(function(){
+                                var refreshInterval = setInterval(function(){
                                     p3danalyseCheckBulk(filename, server, obj, analysisToken);
                                 }, 3000);
+                                if (typeof p3d.refresh_intervals === 'undefined') {
+                                        p3d.refresh_intervals = {};
+                                }
+                                motqnClearAnalysisInterval(file_id);
+                                p3d.refresh_intervals[file_id] = refreshInterval;
 
 
                         }
@@ -1634,7 +1732,7 @@ p3d.analyse_queue[file_id].dim_x
                                 p3dCheckAllFinished();
 
                                 motqnUpdateStatus(price_field, p3d.text_bulk_analysing+' 100%', 'complete');
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
 
                         else if (data.status == '0') { //failed
@@ -1770,7 +1868,7 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
                                                 fileData.new_pricing = 'request';
                                 }
                                 p3dCheckAllFinished();
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
                         else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
@@ -1804,7 +1902,7 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
 
                                 p3dCheckAllFinished();
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
-                                clearInterval(p3d.refresh_interval);
+                                motqnClearAnalysisInterval(file_id);
                         }
                         if (data.status=='2') {
                                 fileData.analyse_status = 2;
