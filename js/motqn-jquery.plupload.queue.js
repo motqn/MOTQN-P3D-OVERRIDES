@@ -161,7 +161,8 @@ used as it is.
                         var $infoGrid = $('<div class="plupload-model-info-grid" />');
 
                         $table.find('tr').each(function() {
-                                var $rowCells = $(this).find('td, th');
+                                var $row = $(this);
+                                var $rowCells = $row.find('td, th');
 
                                 if (!$rowCells.length) {
                                         return;
@@ -215,6 +216,24 @@ used as it is.
                                 $item.append($value);
 
                                 var normalizedLabel = label.toLowerCase();
+                                var normalizedClassName = ($row.attr('class') || '').toLowerCase();
+                                var dimensionKeywords = ['dimension', 'dimensions', 'size', 'width', 'length', 'height'];
+                                var dimensionClassKeywords = ['tr-stats-model-dimensions', 'tr-stats-dimensions', 'tr-stats-width', 'tr-stats-length', 'tr-stats-height'];
+
+                                var isWeightRow = normalizedLabel.indexOf('weight') !== -1 || /\btr-stats-weight\b/.test(normalizedClassName);
+                                var isDimensionsRow = dimensionKeywords.some(function(keyword) {
+                                        return normalizedLabel.indexOf(keyword) !== -1;
+                                });
+
+                                if (!isDimensionsRow) {
+                                        isDimensionsRow = dimensionClassKeywords.some(function(keyword) {
+                                                return normalizedClassName.indexOf(keyword) !== -1;
+                                        });
+                                }
+
+                                if (!isWeightRow && !isDimensionsRow) {
+                                        return;
+                                }
 
                                 if (normalizedLabel.indexOf('weight') !== -1) {
                                         $item.addClass('plupload-model-info-row--weight');
@@ -222,6 +241,14 @@ used as it is.
 
                                 if (normalizedLabel.indexOf('dimension') !== -1 || normalizedLabel.indexOf('size') !== -1) {
                                         $item.addClass('plupload-model-info-row--dimensions');
+                                }
+
+                                if (isDimensionsRow) {
+                                        $item.addClass('plupload-model-info-row--dimensions');
+                                }
+
+                                if (isWeightRow) {
+                                        $item.addClass('plupload-model-info-row--weight');
                                 }
 
                                 $infoGrid.append($item);
