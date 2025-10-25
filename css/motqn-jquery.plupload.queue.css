@@ -24,8 +24,8 @@
 /* ==== LAYOUT: switch to two-column grid (left: uploader / right: sticky summary) ==== */
 .motqn-uploader__grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 32px;
+    grid-template-columns: minmax(0, 1fr) clamp(260px, 32vw, 340px);
+    gap: clamp(24px, 4vw, 32px);
     align-items: start;
     /* ensure no accidental overflow/contain on this grid */
     overflow: visible !important;
@@ -33,7 +33,7 @@
 }
 
 .motqn-uploader__main {
-    min-width: 320px;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -947,7 +947,7 @@
     align-self: start;
     z-index: 1;
     width: 100%;
-    max-width: 340px;
+    max-width: clamp(260px, 32vw, 340px);
     margin-left: auto;
 }
 
@@ -956,7 +956,7 @@
     background: radial-gradient(circle at top, #1d4ed8 0%, #0f172a 80%);
     border-radius: 24px;
     color: #e2e8f0;
-    padding: 24px;
+    padding: clamp(20px, 3.5vw, 24px);
     box-shadow: 0 26px 45px rgba(30, 58, 138, 0.32);
     display: flex;
     flex-direction: column;
@@ -1073,6 +1073,20 @@ body.motqn-has-custom-bulk-uploader .select2-container {
 .plupload_scroll { overflow: visible !important; }
 /* Prevent unexpected stacking contexts from specific elements */
 .moxie-shim { transform: none !important; }
+
+@media (max-width: 1200px) {
+    .motqn-uploader {
+        padding: clamp(24px, 4vw, 32px);
+    }
+
+    .motqn-uploader__grid {
+        grid-template-columns: minmax(0, 1fr) clamp(240px, 36vw, 320px);
+    }
+
+    .motqn-summary {
+        max-width: clamp(240px, 36vw, 320px);
+    }
+}
 
 @media (max-width: 960px) {
     .motqn-uploader {
