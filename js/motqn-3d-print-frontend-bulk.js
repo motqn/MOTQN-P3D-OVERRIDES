@@ -791,11 +791,73 @@ function motqnUpdateSummaryTotals($scope) {
         }
 
         if (!hasTotals) {
-                $totalElement.html('&nbsp;');
+                $totalElement.text('--');
                 return;
         }
 
         $totalElement.text(motqnFormatCurrency(totalPrice));
+}
+
+function motqnResetFilePricing(fileId) {
+        if (!fileId || typeof p3d === 'undefined' || typeof p3d.analyse_queue === 'undefined') {
+                return;
+        }
+
+        var fileData = p3d.analyse_queue[fileId];
+
+        if (typeof fileData === 'undefined') {
+                return;
+        }
+
+        delete fileData.price;
+        delete fileData.total_price;
+        delete fileData.html_price;
+        delete fileData.html_price_total;
+        delete fileData.html_price_unit;
+
+        var $item = jQuery('#' + fileId);
+
+        if ($item.length) {
+                $item.find('.plupload_file_price-tag--unit .plupload_file_price-tag-value').text('--');
+                $item.find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text('--');
+        }
+}
+
+function motqnIsStaleAnalysis(fileId, analysisToken) {
+        if (typeof analysisToken === 'undefined') {
+                return false;
+        }
+
+        if (!fileId || typeof p3d === 'undefined' || typeof p3d.analyse_queue === 'undefined') {
+                return true;
+        }
+
+        if (typeof p3d.analyse_queue[fileId] === 'undefined') {
+                return true;
+        }
+
+        return p3d.analyse_queue[fileId].analysisToken !== analysisToken;
+}
+
+function motqnHandleStaleAnalysis(fileId, analysisToken) {
+        if (!motqnIsStaleAnalysis(fileId, analysisToken)) {
+                return false;
+        }
+
+        if (typeof p3d !== 'undefined' && typeof p3d.analyse_queue !== 'undefined' && typeof p3d.analyse_queue[fileId] !== 'undefined') {
+                p3d.analyse_queue[fileId].analyse_status = 0;
+        }
+
+        p3d.analysing = false;
+
+        if (p3d.refresh_interval) {
+                clearInterval(p3d.refresh_interval);
+                p3d.refresh_interval = null;
+        }
+
+        p3dScheduleAutoAnalyse();
+
+        return true;
 }
 
 function motqnUpdateStatus($statusEl, message, state) {
@@ -1118,15 +1180,28 @@ function p3dAnalyseModelBulk(file_id) {
         if (typeof(p3d.analyse_queue[file_id])=='undefined') return;
         if (typeof(p3d.analyse_queue[file_id].repair_status)!='undefined' && p3d.analyse_queue[file_id].repair_status==-1) {
                 return;
-	}
-	clearInterval(p3d.refresh_interval);	              
+        }
 
-	p3d.analyse_queue[file_id].analyse_status = 0;
-        p3d.analyse_queue[file_id].new_pricing = false;
+        motqnResetFilePricing(file_id);
+
+        var fileData = p3d.analyse_queue[file_id];
+
+        if (typeof fileData.analysisToken === 'undefined') {
+                fileData.analysisToken = 0;
+        }
+
+        fileData.analysisToken++;
+
+        clearInterval(p3d.refresh_interval);
+
+        fileData.analyse_status = 0;
+        fileData.new_pricing = false;
         p3d.analyse_requested = true;
         jQuery('#p3d-calculate-price-button').show();
         jQuery('#p3d-submit-button').prop('disabled', true);
         p3dScheduleAutoAnalyse();
+
+        motqnUpdateSummaryTotals(jQuery('#' + file_id).closest('.motqn-uploader'));
 }
 
 function p3dScheduleAutoAnalyse() {
@@ -1225,30 +1300,37 @@ function p3dAnalyseModelAJAXBulk (obj, status) {
 
 
 
-	var file_id = jQuery(obj).prop('id');
-	var dim_x = dim_y = dim_z = 0;
+        var file_id = jQuery(obj).prop('id');
+        var fileData = p3d.analyse_queue[file_id];
+
+        if (typeof fileData === 'undefined') {
+                return;
+        }
+
+        var analysisToken = fileData.analysisToken || 0;
+        var dim_x = dim_y = dim_z = 0;
         motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 1%', 'analysing');
 
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr1 && p3d.analyse_queue[file_id].xhr1.readyState != 4) {
-		p3d.analyse_queue[file_id].xhr1.abort();
-		p3d.analysing = false;
-		p3d.analyse_queue[file_id].analyse_status = 0;
-	}
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
-		p3d.analyse_queue[file_id].xhr2.abort();
-		p3d.analysing = false;
-		p3d.analyse_queue[file_id].analyse_status = 0;
-	}
+        if(fileData && fileData.xhr1 && fileData.xhr1.readyState != 4) {
+                fileData.xhr1.abort();
+                p3d.analysing = false;
+                fileData.analyse_status = 0;
+        }
+        if(fileData && fileData.xhr2 && fileData.xhr2.readyState != 4) {
+                fileData.xhr2.abort();
+                p3d.analysing = false;
+                fileData.analyse_status = 0;
+        }
 
-	if (typeof(p3d.analyse_queue[file_id].dim_x)!='undefined') {
-		dim_x = p3d.analyse_queue[file_id].dim_x;
-	}
-	if (typeof(p3d.analyse_queue[file_id].dim_y)!='undefined') {
-		dim_y = p3d.analyse_queue[file_id].dim_y;
-	}
-	if (typeof(p3d.analyse_queue[file_id].dim_z)!='undefined') {
-		dim_z = ((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2)
-	}
+        if (typeof(fileData.dim_x)!='undefined') {
+                dim_x = fileData.dim_x;
+        }
+        if (typeof(fileData.dim_y)!='undefined') {
+                dim_y = fileData.dim_y;
+        }
+        if (typeof(fileData.dim_z)!='undefined') {
+                dim_z = ((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2)
+        }
 /*
 p3d.analyse_queue[file_id].dim_x
 */
@@ -1261,7 +1343,7 @@ p3d.analyse_queue[file_id].dim_x
 	var printer_id = jQuery(obj).find('select[name=product_printer]').val()
        	var material_id = jQuery(obj).find('select[name=product_filament]').val();
 	var unit = jQuery(obj).find('select[name=product_unit]').val();
-	var filename = p3d.analyse_queue[file_id].server_name;
+        var filename = fileData.server_name;
 	jQuery('#p3d-repair-image').hide();
 	var price_field = jQuery(obj).find('.plupload_file_status');
 
@@ -1285,14 +1367,14 @@ p3d.analyse_queue[file_id].dim_x
 //console.log(custom_attributes);
 //console.log(JSON.stringify(custom_attributes));
 
-	if (p3d.analyse_requested) {
-	p3d.analysing = true;
-	p3d.analyse_queue[file_id].xhr1=jQuery.ajax({
-		method: "POST",
-		type: "POST",
-		url: p3d.url,
-		data: { action: "p3d_handle_analyse", 
-			product_id: jQuery('#p3d-product-id').val(),
+        if (p3d.analyse_requested) {
+        p3d.analysing = true;
+        fileData.xhr1=jQuery.ajax({
+                method: "POST",
+                type: "POST",
+                url: p3d.url,
+                data: { action: "p3d_handle_analyse",
+                        product_id: jQuery('#p3d-product-id').val(),
 			printer_id: printer_id,
 			material_id: material_id,
 			filename: filename, 
@@ -1313,96 +1395,110 @@ p3d.analyse_queue[file_id].dim_x
 		      }
 		})
 		.done(function( msg ) {
-			var data = jQuery.parseJSON( msg );
-			
-			if (typeof(data.error)!=='undefined') {
-				p3d.analysing = false;
-				jQuery('#p3d-submit-button').prop('disabled', false);
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				if (data.error.code==120) {
-					if (p3d.pricing_too_large=='request') {
-						p3d.analyse_queue[file_id].fatal_error = 1;
-						p3d.analyse_queue[file_id].new_pricing = 'request';
-					}
-				}
-				else if (data.error.code==121) {
-					if (p3d.pricing_too_small=='request') {
-						p3d.analyse_queue[file_id].fatal_error = 1;
-						p3d.analyse_queue[file_id].new_pricing = 'request';
-					}
-				}
-				else if (p3d.pricing_api_expired=='request') {
-					p3d.analyse_queue[file_id].fatal_error = 1;
-					p3d.analyse_queue[file_id].new_pricing = 'request';
-				}
+                        var data = jQuery.parseJSON( msg );
+
+                        if (motqnHandleStaleAnalysis(file_id, analysisToken)) {
+                                return;
+                        }
+
+                        if (typeof(data.error)!=='undefined') {
+                                p3d.analysing = false;
+                                jQuery('#p3d-submit-button').prop('disabled', false);
+                                fileData.analyse_status = -1;
+                                if (data.error.code==120) {
+                                        if (p3d.pricing_too_large=='request') {
+                                                fileData.fatal_error = 1;
+                                                fileData.new_pricing = 'request';
+                                        }
+                                }
+                                else if (data.error.code==121) {
+                                        if (p3d.pricing_too_small=='request') {
+                                                fileData.fatal_error = 1;
+                                                fileData.new_pricing = 'request';
+                                        }
+                                }
+                                else if (p3d.pricing_api_expired=='request') {
+                                        fileData.fatal_error = 1;
+                                        fileData.new_pricing = 'request';
+                                }
 
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
 
 
-				return false;
+                                return false;
 
-			}
+                        }
 
-			if (data.status == '2') { //in progress
-				var server = data.server;
-				p3d.checking = true;
-			        p3dDisplayPrice(false);
+                        if (data.status == '2') { //in progress
+                                var server = data.server;
+                                p3d.checking = true;
+                                p3dDisplayPrice(false);
 
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 10%', 'analysing');
-				p3d.analyse_queue[file_id].analyse_status = 2;
+                                fileData.analyse_status = 2;
 
-				p3d.refresh_interval = setInterval(function(){
-				    p3danalyseCheckBulk(filename, server, obj); 
-				}, 3000);
+                                p3d.refresh_interval = setInterval(function(){
+                                    p3danalyseCheckBulk(filename, server, obj, analysisToken);
+                                }, 3000);
 
-				
-			}
-			else if (data.status == '1') { //success, no API
+
+                        }
+                        else if (data.status == '1') { //success, no API
 				//todo also add PHP model stats
 				p3d.analysing = false;
 				p3d.checking = false;
 				p3d.analyse_error = false;
 
 				p3d.triangulated_volume = data.material_volume;
-				p3d.triangulated_surface_area = data.surface_area;
-				//todo: p3d.triangulated_volume
+                                p3d.triangulated_surface_area = data.surface_area;
+                                //todo: p3d.triangulated_volume
 
-				p3dShowResponseBulk(obj, data);
-				p3d.analyse_queue[file_id].analyse_status = 1;
+                                if (motqnIsStaleAnalysis(file_id, analysisToken)) {
+                                        return;
+                                }
+
+                                p3dShowResponseBulk(obj, data);
+                                fileData.analyse_status = 1;
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
 
-				p3dCheckAllFinished();
+                                p3dCheckAllFinished();
 
                                 motqnUpdateStatus(price_field, p3d.text_bulk_analysing+' 100%', 'complete');
-				clearInterval(p3d.refresh_interval);
-			}
+                                clearInterval(p3d.refresh_interval);
+                        }
 
-			else if (data.status == '0') { //failed
+                        else if (data.status == '0') { //failed
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_model_analyse_failed, 'error');
-				p3d.analyse_error = true;
-				p3d.analysing = false;
+                                p3d.analyse_error = true;
+                                p3d.analysing = false;
 
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				if (p3d.pricing_api_expired=='request') {
-					p3d.analyse_queue[file_id].fatal_error = 1;
-					p3d.analyse_queue[file_id].new_pricing = 'request';
-				}
-			}
+                                fileData.analyse_status = -1;
+                                if (p3d.pricing_api_expired=='request') {
+                                        fileData.fatal_error = 1;
+                                        fileData.new_pricing = 'request';
+                                }
+                        }
 
-		});
-	}
+                });
+        }
 	p3d.analyse_requested=false;
 }
 
-function p3danalyseCheckBulk(filename, server, obj) {
+function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
 
-	var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
-	if(p3d.analyse_queue[file_id] && p3d.analyse_queue[file_id].xhr2 && p3d.analyse_queue[file_id].xhr2.readyState != 4) {
-		return;
-	}
-	if (p3d.processing) {
-		return;
-	}
+        var file_id = jQuery(obj).closest('li[class^=plupload]').prop('id');
+        var fileData = p3d.analyse_queue[file_id];
+
+        if (motqnHandleStaleAnalysis(file_id, analysisToken)) {
+                return;
+        }
+
+        if(fileData && fileData.xhr2 && fileData.xhr2.readyState != 4) {
+                return;
+        }
+        if (p3d.processing) {
+                return;
+        }
 	//var infills = jQuery(obj).find('select[name=product_printer option:checked').data('infills')+'';
 	var printer_type = jQuery(obj).find('select[name=product_printer] option:checked').data('type')
 	var printer_id = jQuery(obj).find('select[name=product_printer]').val();
@@ -1429,16 +1525,16 @@ function p3danalyseCheckBulk(filename, server, obj) {
 	});
 
 
-	var dim_x = dim_y = dim_z = 0;
-	if (typeof(p3d.analyse_queue[file_id].dim_x)!='undefined') {
-		dim_x = p3d.analyse_queue[file_id].dim_x;
-	}
-	if (typeof(p3d.analyse_queue[file_id].dim_y)!='undefined') {
-		dim_y = p3d.analyse_queue[file_id].dim_y;
-	}
-	if (typeof(p3d.analyse_queue[file_id].dim_z)!='undefined') {
-		dim_z = ((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2);
-	}
+        var dim_x = dim_y = dim_z = 0;
+        if (fileData && typeof(fileData.dim_x)!='undefined') {
+                dim_x = fileData.dim_x;
+        }
+        if (fileData && typeof(fileData.dim_y)!='undefined') {
+                dim_y = fileData.dim_y;
+        }
+        if (fileData && typeof(fileData.dim_z)!='undefined') {
+                dim_z = ((jQuery('#'+file_id).find('select[name=product_filament] option:selected').data('laser-cutting-thickness'))/10).toFixed(2);
+        }
 
 	if  (p3d.pricing == 'checkout') {
 	        p3dDisplayAddToCart(false);
@@ -1447,12 +1543,18 @@ function p3danalyseCheckBulk(filename, server, obj) {
 
         p3dDisplayPrice(false);
 
-	if (p3d.analyse_queue[file_id].analyse_status==1 || p3d.analyse_queue[file_id].analyse_status==-1) return;
+        if (fileData && (fileData.analyse_status==1 || fileData.analyse_status==-1)) return;
 
-	p3d.analyse_queue[file_id].xhr2=jQuery.ajax({
-		method: "POST",
-		type: "POST",
-		url: p3d.url,
+        fileData = p3d.analyse_queue[file_id];
+
+        if (typeof fileData === 'undefined') {
+                return;
+        }
+
+        fileData.xhr2=jQuery.ajax({
+                method: "POST",
+                type: "POST",
+                url: p3d.url,
 		data: { action: "p3d_handle_analyse_check", 
 			product_id: jQuery('#p3d-product-id').val(),
 			printer_id: printer_id,
@@ -1474,56 +1576,65 @@ function p3danalyseCheckBulk(filename, server, obj) {
 			bulk: true
 		      }
 		})
-		.done(function( msg ) {
-			var data = jQuery.parseJSON( msg );
+                .done(function( msg ) {
+                        var data = jQuery.parseJSON( msg );
 
-			if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
-				p3d.analyse_error = true;
-				p3d.analysing = false;
+                        if (motqnHandleStaleAnalysis(file_id, analysisToken)) {
+                                return;
+                        }
+
+                        if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
+                                p3d.analyse_error = true;
+                                p3d.analysing = false;
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
-				if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				//p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
+                                if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
+                                fileData.analyse_status = -1;
+                                //p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
 
-				if (p3d.pricing_api_expired=='request') {
-					p3d.analyse_queue[file_id].fatal_error = 1;
-					p3d.analyse_queue[file_id].new_pricing = 'request';
-				}
-				p3dCheckAllFinished();
-				clearInterval(p3d.refresh_interval);
-			}
-			else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
+                                if (p3d.pricing_api_expired=='request') {
+                                        fileData.fatal_error = 1;
+                                        fileData.new_pricing = 'request';
+                                }
+                                p3dCheckAllFinished();
+                                clearInterval(p3d.refresh_interval);
+                        }
+                        else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
-				p3d.analyse_queue[file_id].analyse_status = -1;
-				p3d.analyse_queue[file_id].fatal_error = 1;
-				p3d.analyse_queue[file_id].new_pricing = data.error.new_pricing;
-			}
-			if (data.status=='1') {
-				p3d.checking = false;
-				p3d.analyse_error = false;
-				p3d.analysing = false;
-				p3dShowResponseBulk(obj, data);
+                                fileData.analyse_status = -1;
+                                fileData.fatal_error = 1;
+                                fileData.new_pricing = data.error.new_pricing;
+                        }
+                        if (data.status=='1') {
+                                p3d.checking = false;
+                                p3d.analyse_error = false;
+                                p3d.analysing = false;
 
-				if (typeof(data.print_time)!='undefined' && data.print_time==0 && p3d.api_analyse=='on') {
-					if (p3d.pricing_print_time_zero=='request') {
-						p3d.analyse_queue[file_id].analyse_status = -1;
-						p3d.analyse_queue[file_id].fatal_error = 1;
-						p3d.analyse_queue[file_id].new_pricing = 'request';
-					}
-				}
-				p3d.analyse_queue[file_id].analyse_status = 1;
+                                if (motqnIsStaleAnalysis(file_id, analysisToken)) {
+                                        return;
+                                }
 
-				p3dCheckAllFinished();
+                                p3dShowResponseBulk(obj, data);
+
+                                if (typeof(data.print_time)!='undefined' && data.print_time==0 && p3d.api_analyse=='on') {
+                                        if (p3d.pricing_print_time_zero=='request') {
+                                                fileData.analyse_status = -1;
+                                                fileData.fatal_error = 1;
+                                                fileData.new_pricing = 'request';
+                                        }
+                                }
+                                fileData.analyse_status = 1;
+
+                                p3dCheckAllFinished();
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
-				clearInterval(p3d.refresh_interval);
-			}
-			if (data.status=='2') {
-				p3d.analyse_queue[file_id].analyse_status = 2;
+                                clearInterval(p3d.refresh_interval);
+                        }
+                        if (data.status=='2') {
+                                fileData.analyse_status = 2;
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' '+data.progress+'%', 'analysing');
-			}
+                        }
 
-		});
-	
+                });
+
 }
 function p3dShowResponseBulk(obj, model_stats) {
         var price = 0;
