@@ -1566,9 +1566,13 @@ function p3dShowResponseBulk(obj, model_stats) {
         p3d.analyse_queue[file_id].total_price = total_price_value;
         p3d.analyse_queue[file_id].qty = qty_value;
 
-        var $priceContainer = jQuery(obj).find('.plupload_file_price');
-        $priceContainer.find('.plupload_file_price-tag--unit .plupload_file_price-tag-value').text(html_unit_price);
-        $priceContainer.find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(html_total_price);
+        var $listItem = jQuery(obj).closest('li[class^=plupload]');
+        if (!$listItem.length) {
+                $listItem = jQuery(obj);
+        }
+
+        $listItem.find('.p3d-row-unit .plupload_file_price-tag--unit .plupload_file_price-tag-value').text(html_unit_price);
+        $listItem.find('.p3d-row-qty .plupload_file_price-tag--total .plupload_file_price-tag-value').text(html_total_price);
 }
 
 function p3dSubmitFormBulk() {

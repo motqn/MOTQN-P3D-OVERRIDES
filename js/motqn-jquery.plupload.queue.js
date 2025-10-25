@@ -959,77 +959,70 @@ used as it is.
                                                         qty_label = p3d.text_bulk_quantity;
                                                 }
 
-                                                var attributes = '<table class="p3d-stats-bulk">';
-                                                var qty_row = '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div></td></tr>';
-
-						if (p3d.selection_order=='materials_printers') {
-							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
-							attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
-						}
-						else if (p3d.selection_order=='printers_materials') {
-							attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
-							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
-						}
-
-						attributes += '<tr style="'+(p3d.show_coatings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_coating+'</td><td>'+coating_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_infills!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_infill+'</td><td>'+infill_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_postprocessings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_postprocessing+'</td><td>'+postprocessing_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_scale!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_unit+'</td><td>'+unit_attribute+'</td></tr>';
-
-						if (file_ext=='dxf' || file_ext=='svg' || file_ext=='eps' || file_ext=='pdf') {
-							//inject cutting instructions here
-							//var cutting_instructions_html = '<div class="p3d-cutting-instructions">'+p3d.text_cutting_instructions;
-							var selects_html='';
-							if (typeof(p3d.analyse_queue[file.id]) != 'undefined' && typeof(p3d.analyse_queue[file.id].colors) != 'undefined') {
-								jQuery.each( p3d.analyse_queue[file.id].colors, function( key, color ) {
-									if (typeof(color)=='undefined') return;	
-	 
-									selects_html+='<tr>';
-									selects_html+='<td><div class="p3d-circle" style="color:'+color+';"></div></td>';
-									selects_html+='<td>';
-									selects_html+='<select autocomplete="off" onchange="p3dSelectCuttingInstructionsBulk(\''+file.id+'\', this)" name="p3d_cutting_instructions[\''+color+'\']">';
-		
-									if (p3d.laser_cutting_cut=='on') {
-										selects_html+='<option value="cut">'+p3d.text_cut;
-									}
-									if (p3d.laser_cutting_engrave=='on') {
-										selects_html+='<option value="engrave">'+p3d.text_engrave;
-									}
-									if (p3d.laser_cutting_ignore=='on') {
-										selects_html+='<option value="ignore">'+p3d.text_ignore;
-									}
-									selects_html+='</select>';
-									selects_html+='</td>';
-									selects_html+='</tr>';
-				
-								});
-								//cutting_instructions_html+=selects_html;
-								//cutting_instructions_html+='</div>';
-								if (selects_html.length) {
-//									jQuery('#'+file_id).find('.p3d-stats-bulk').append(selects_html);
-									attributes += selects_html;
-								}
-							}
-						}
-
-                                                if (custom_attribute) {
-                                                        attributes += custom_attribute;
+                                                if (typeof(file.price)=='undefined') {
+                                                        file.price = 0;
                                                 }
-
-                                                attributes += qty_row;
-
-                                                if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
-						//todo custom attrs
-
-						attributes += '</table>';
-						if (typeof(file.price)=='undefined') file.price = 0;
 
                                                 var unit_price_display = file.price;
                                                 var total_price_display = file.price;
 
-						if (file.percent==99 && file.status==5) {
-							file.percent = 100;
-						}
+                                                var material_row;
+                                                var printer_row;
+
+                    if (p3d.selection_order=='materials_printers') {
+                        material_row = '<tr style=\"'+(p3d.show_materials!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';;
+                        printer_row = '<tr style=\"'+(p3d.show_printers!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';;
+                    }
+                    else if (p3d.selection_order=='printers_materials') {
+                        printer_row = '<tr style=\"'+(p3d.show_printers!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';;
+                        material_row = '<tr style=\"'+(p3d.show_materials!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';;
+                    }
+
+                    var coating_row = '<tr style=\"'+(p3d.show_coatings!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_coating+'</td><td>'+coating_attribute+'</td></tr>';;
+                    var infill_row = '<tr style=\"'+(p3d.show_infills!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_infill+'</td><td>'+infill_attribute+'</td></tr>';;
+                    var postprocessing_row = '<tr style=\"'+(p3d.show_postprocessings!=\"on\" ? \"display:none;\" : \"\")+'\"><td>'+p3d.text_bulk_postprocessing+'</td><td>'+postprocessing_attribute+'</td></tr>';;
+
+                    var cutting_rows = '';
+
+                    if (file_ext=='dxf' || file_ext=='svg' || file_ext=='eps' || file_ext=='pdf') {
+                        //inject cutting instructions here
+                        //var cutting_instructions_html = '<div class=\"p3d-cutting-instructions\">'+p3d.text_cutting_instructions;
+                        var selects_html='';
+                        if (typeof(p3d.analyse_queue[file.id]) != 'undefined' && typeof(p3d.analyse_queue[file.id].colors) != 'undefined') {
+                            jQuery.each( p3d.analyse_queue[file.id].colors, function( key, color ) {
+                                if (typeof(color)=='undefined') return;
+
+                                selects_html+='<tr>';;
+                                selects_html+='<td><div class=\"p3d-circle\" style=\"color:'+color+';\"></div></td>';;
+                                selects_html+='<td>';;
+                                selects_html+='<select autocomplete=\"off\" onchange=\"p3dSelectCuttingInstructionsBulk(\\\''+file.id+'\\\', this)\" name=\"p3d_cutting_instructions[\\\''+color+'\\\']\">';
+
+                                if (p3d.laser_cutting_cut=='on') {
+                                    selects_html+='<option value=\"cut\">'+p3d.text_cut;
+                                }
+                                if (p3d.laser_cutting_engrave=='on') {
+                                    selects_html+='<option value=\"engrave\">'+p3d.text_engrave;
+                                }
+                                if (p3d.laser_cutting_ignore=='on') {
+                                    selects_html+='<option value=\"ignore\">'+p3d.text_ignore;
+                                }
+                                selects_html+='</select>';;
+                                selects_html+='</td>';;
+                                selects_html+='</tr>';;
+
+                            });
+                            //cutting_instructions_html+=selects_html;
+                            //cutting_instructions_html+='</div>';
+                            if (selects_html.length) {
+                    //            jQuery('#'+file_id).find('.p3d-stats-bulk').append(selects_html);
+                                cutting_rows += selects_html;
+                            }
+                        }
+                    }
+
+                                                if (file.percent==99 && file.status==5) {
+                                                        file.percent = 100;
+                                                }
 //						console.log(file.percent, file.status)
                                                 var html_status = p3d.text_bulk_uploading+' ' + file.percent + '%';
 
@@ -1079,6 +1072,33 @@ used as it is.
 
 
                                                 }
+                    var unit_row = '<tr class=\"p3d-row-unit\"'+(p3d.show_scale!=\"on\" ? ' style=\"display:none;\"' : '')+'<td>'+p3d.text_bulk_unit+'</td><td><div class=\"plupload_row_with_price\"><div class=\"plupload_row_with_price__control\">'+unit_attribute+'</div><span class=\"plupload_file_price-tag plupload_file_price-tag--unit\"><span class=\"plupload_file_price-tag-label\">Unit price</span><span class=\"plupload_file_price-tag-value\">'+unit_price_display+'</span></span></div></td></tr>';;
+                    var qty_row = '<tr class=\"p3d-row-qty\"><td>' + qty_label + '</td><td><div class=\"plupload_row_with_price\"><div class=\"plupload_row_with_price__control\"><div class=\"plupload_file_qty\"><input name=\"' + file.id + '_qty\" type=\"number\" min=\"1\" step=\"1\" value=\"1\" onchange=\"p3dSelectQTYBulk(this)\" oninput=\"p3dSelectQTYBulk(this)\"></div></div><span class=\"plupload_file_price-tag plupload_file_price-tag--total\"><span class=\"plupload_file_price-tag-label\">Total price</span><span class=\"plupload_file_price-tag-value\">' + total_price_display + '</span></span></div></td></tr>';;
+
+                    var attributes = '<table class=\"p3d-stats-bulk\">';
+                    if (typeof material_row !== 'undefined') {
+                        attributes += material_row;
+                    }
+                    if (typeof printer_row !== 'undefined') {
+                        attributes += printer_row;
+                    }
+                    attributes += coating_row;
+                    attributes += infill_row;
+                    attributes += postprocessing_row;
+                    attributes += unit_row;
+                    attributes += cutting_rows;
+
+                    if (custom_attribute) {
+                        attributes += custom_attribute;
+                    }
+
+                    attributes += qty_row;
+
+                    if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class=\"p3d-bulk-comments\" rows=\"2\"></textarea></td></tr>';;
+                    //todo custom attrs
+
+                    attributes += '</table>';;
+
                                                 if (status_state=='idle') {
                                                         if (file.status == plupload.UPLOADING) {
                                                                 status_state = 'uploading';
@@ -1116,16 +1136,6 @@ used as it is.
                                                                                 '</div>' +
                                                                                 '<div class="motqn-file-card__options">' +
                                                                                         attributes +
-                                                                                '</div>' +
-                                                                                '<div class="plupload_file_price">' +
-                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--unit">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Unit price</span>' +
-                                                                                                '<span class="plupload_file_price-tag-value">' + unit_price_display + '</span>' +
-                                                                                        '</span>' +
-                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--total">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Total price</span>' +
-                                                                                                '<span class="plupload_file_price-tag-value">' + total_price_display + '</span>' +
-                                                                                        '</span>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                 '</div>' +
