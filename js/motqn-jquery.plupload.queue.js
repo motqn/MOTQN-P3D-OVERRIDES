@@ -758,6 +758,10 @@ used as it is.
                                 '<input type="hidden" id="' + id + '_count" name="' + id + '_count" value="0" />' +
                         '</div>'
                 );
+
+                if (typeof document !== 'undefined' && document.body) {
+                        document.body.classList.add('motqn-has-custom-bulk-uploader');
+                }
         }
 
 	$.fn.pluploadQueue = function(settings) {
