@@ -746,7 +746,27 @@ function motqnUpdateSummaryTotals($scope) {
         var totalPrice = 0;
         var hasTotals = false;
 
+        var $summaryScope = ($scope && $scope.length) ? $scope : jQuery(document);
+        var fileScope = null;
+
+        if ($summaryScope.length) {
+                fileScope = {};
+                $summaryScope.find('li[class^=plupload]').each(function() {
+                        if (this.id) {
+                                fileScope[this.id] = true;
+                        }
+                });
+
+                if (!Object.keys(fileScope).length) {
+                        fileScope = null;
+                }
+        }
+
         jQuery.each(p3d.analyse_queue, function(fileId, fileData) {
+                if (fileScope && !fileScope[fileId]) {
+                        return;
+                }
+
                 if (!fileData || typeof fileData.total_price === 'undefined') {
                         return;
                 }
@@ -760,7 +780,6 @@ function motqnUpdateSummaryTotals($scope) {
                 hasTotals = true;
         });
 
-        var $summaryScope = ($scope && $scope.length) ? $scope : jQuery(document);
         var $totalElement = $summaryScope.find('.plupload_total_price');
 
         if (!$totalElement.length) {
