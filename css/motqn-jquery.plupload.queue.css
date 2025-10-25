@@ -666,7 +666,7 @@
 }
 
 .motqn-option-field--unit select {
-    min-width: 72px;
+    min-width: 60px;
     width: auto;
 }
 
@@ -694,12 +694,12 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty select {
     padding: 10px 12px;
     width: auto;
-    min-width: 72px;
+    min-width: 60px;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_qty input[type="number"] {
     padding: 6px 8px;
-    width: 48px;
+    width: 42px;
     text-align: center;
     appearance: auto;
     -moz-appearance: auto;

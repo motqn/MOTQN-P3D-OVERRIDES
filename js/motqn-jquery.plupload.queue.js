@@ -714,8 +714,40 @@ used as it is.
 
                         var groupData = groupLookup[groupKey];
                         var hasEnabled = false;
+                        var firstEnabledOption = null;
+                        var hasValidSelection = false;
 
                         for (var oi = 0; oi < groupData.options.length; oi++) {
+                                var optionData = groupData.options[oi];
+                                var optionDisabled = optionData.option.prop('disabled');
+
+                                if (!optionDisabled) {
+                                        hasEnabled = true;
+
+                                        if (!firstEnabledOption) {
+                                                firstEnabledOption = optionData;
+                                        }
+
+                                        if (selectedValue && optionData.value === selectedValue) {
+                                                hasValidSelection = true;
+                                        }
+                                }
+                        }
+
+                        if (!hasValidSelection && firstEnabledOption) {
+                                if ($select.val() !== firstEnabledOption.value) {
+                                        isSyncing = true;
+                                        $select.val(firstEnabledOption.value);
+                                        $select.trigger('change');
+                                        isSyncing = false;
+                                        return;
+                                }
+
+                                selectedValue = firstEnabledOption.value;
+                                hasValidSelection = true;
+                        }
+
+                        for (var oi2 = 0; oi2 < groupData.options.length; oi2++) {
                                 (function(optionData) {
                                         var optionDisabled = optionData.option.prop('disabled');
                                         var optionSelected = selectedValue === optionData.value;
@@ -737,9 +769,6 @@ used as it is.
                                         if (optionDisabled) {
                                                 $chip.addClass('is-disabled').prop('disabled', true).attr('aria-disabled', 'true');
                                         }
-                                        else {
-                                                hasEnabled = true;
-                                        }
 
                                         if (optionSelected) {
                                                 $chip.addClass('is-selected');
@@ -757,7 +786,7 @@ used as it is.
                                         });
 
                                         $colorsContainer.append($chip);
-                                })(groupData.options[oi]);
+                                })(groupData.options[oi2]);
                         }
 
                         if (!groupData.options.length) {
@@ -766,7 +795,7 @@ used as it is.
                         else if (!hasEnabled) {
                                 $colorsContainer.append('<p class="motqn-material-picker__message">' + allUnavailableText + '</p>');
                         }
-                        else if (!selectedValue || !groupData.options.some(function(entry) { return entry.value === selectedValue; })) {
+                        else if (!hasValidSelection) {
                                 $colorsContainer.append('<p class="motqn-material-picker__message">' + colorPromptText + '</p>');
                         }
                 }
