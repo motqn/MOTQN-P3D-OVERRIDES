@@ -197,7 +197,7 @@ fieldset.p3d-fieldset legend {
 
 table.p3d-stats {
 /*	visibility: hidden;*/
-	display: none;
+	display: table;
 	border-collapse:separate;
 	border-spacing:0;
 	border-width:1px 0 0 1px;
@@ -206,7 +206,7 @@ table.p3d-stats {
 }
 
 p.p3d-stats {
-	display: none;
+	display: block;
 }
 
 table.p3d-stats-bulk {
