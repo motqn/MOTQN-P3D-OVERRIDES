@@ -272,7 +272,7 @@
 
 .motqn-file-card {
     display: flex;
-    gap: 32px;
+    gap: 28px;
     align-items: flex-start;
     width: 100%;
 }
@@ -282,14 +282,16 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    flex: 0 0 220px;
+    flex: 0 0 260px;
+    max-width: 260px;
 }
 
 .motqn-file-card__details {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    flex: 1 1 0;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .motqn-file-card__header {
@@ -302,6 +304,8 @@
 
 .motqn-file-card__options {
     width: 100%;
+    max-width: 540px;
+    align-self: flex-start;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_name,
@@ -543,6 +547,17 @@
 .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--dimensions .plupload-model-info-label,
 .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row--dimensions .plupload-model-info-value {
     color: #ffffff;
+}
+
+@media (min-width: 961px) {
+    .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-row {
+        flex-wrap: nowrap;
+    }
+
+    .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-label,
+    .motqn-card-list li:not(.plupload_droptext) .plupload-model-info-value {
+        white-space: nowrap;
+    }
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_status::before {
@@ -1087,11 +1102,16 @@
     .motqn-file-card__media {
         flex: 0 0 auto;
         align-items: center;
+        max-width: none;
     }
 
     .motqn-file-card__media .plupload_file_image {
         width: 180px;
         height: 180px;
+    }
+
+    .motqn-file-card__options {
+        max-width: 100%;
     }
 }
 
