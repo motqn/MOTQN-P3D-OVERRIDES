@@ -881,150 +881,6 @@ function motqnResetFilePricing(fileId) {
         }
 }
 
-function motqnNormalizeSignatureScalar(value) {
-        if (typeof value === 'undefined' || value === null) {
-                return null;
-        }
-
-        if (typeof value === 'boolean') {
-                return value ? 'true' : 'false';
-        }
-
-        if (typeof value === 'number') {
-                if (!isFinite(value)) {
-                        return null;
-                }
-
-                return String(value);
-        }
-
-        if (typeof value === 'string') {
-                var trimmed = value.trim();
-
-                if (!trimmed.length) {
-                        return '';
-                }
-
-                var numericValue = Number(trimmed);
-
-                if (!isNaN(numericValue)) {
-                        return String(numericValue);
-                }
-
-                return trimmed;
-        }
-
-        if (Array.isArray(value)) {
-                return value.length ? JSON.stringify(value) : null;
-        }
-
-        if (typeof value === 'object') {
-                return JSON.stringify(value);
-        }
-
-        return null;
-}
-
-function motqnCanonicalizeSignatureRecord(record) {
-        if (!record || typeof record !== 'object') {
-                return '';
-        }
-
-        var parts = [];
-
-        function addPart(key, value) {
-                var normalized = motqnNormalizeSignatureScalar(value);
-
-                if (normalized === null || normalized === '') {
-                        return;
-                }
-
-                parts.push(key + ':' + normalized);
-        }
-
-        function addPairs(prefix, entries, keyProp, valueProp) {
-                if (!Array.isArray(entries) || !entries.length) {
-                        return;
-                }
-
-                var normalizedEntries = [];
-
-                jQuery.each(entries, function(_, entry) {
-                        if (!entry) {
-                                return;
-                        }
-
-                        var keyValue = typeof keyProp === 'function' ? keyProp(entry) : entry[keyProp];
-                        var normalizedKey = motqnNormalizeSignatureScalar(keyValue);
-
-                        if (normalizedKey === null) {
-                                return;
-                        }
-
-                        var valueValue = typeof valueProp === 'function' ? valueProp(entry) : entry[valueProp];
-                        var normalizedValue = motqnNormalizeSignatureScalar(valueValue);
-
-                        if (normalizedValue === null) {
-                                normalizedValue = '';
-                        }
-
-                        normalizedEntries.push(prefix + ':' + normalizedKey + '=' + normalizedValue);
-                });
-
-                if (!normalizedEntries.length) {
-                        return;
-                }
-
-                normalizedEntries.sort();
-                Array.prototype.push.apply(parts, normalizedEntries);
-        }
-
-        addPart('printer', record.printer);
-        addPart('material', record.material);
-        addPart('infill', record.infill);
-        addPart('infill_id', record.infill_id);
-        addPart('unit', record.unit);
-        addPart('postprocessing', record.postprocessing);
-        addPart('server_name', record.server_name);
-        addPart('dim_x', record.dim_x);
-        addPart('dim_y', record.dim_y);
-        addPart('dim_z', record.dim_z);
-        addPart('image_height', record.image_height);
-        addPart('image_map', record.image_map);
-        addPart('triangulation_required', record.triangulation_required);
-
-        addPairs('cutting', record.cutting, 'key', 'value');
-        addPairs('custom', record.custom_attributes, 'name', 'value');
-
-        if (!parts.length) {
-                return '';
-        }
-
-        parts.sort();
-
-        return parts.join('|');
-}
-
-function motqnNormalizeStoredSignature(signature) {
-        if (typeof signature !== 'string' || !signature.length) {
-                return null;
-        }
-
-        if (signature.indexOf('|') !== -1 && signature.indexOf('{') === -1 && signature.indexOf('[') === -1) {
-                return signature;
-        }
-
-        try {
-                var parsed = JSON.parse(signature);
-                var canonical = motqnCanonicalizeSignatureRecord(parsed);
-
-                return canonical.length ? canonical : null;
-        }
-        catch (e) {
-                return signature;
-        }
-}
-
 function motqnGenerateAnalysisSignature(fileId, fileData) {
         var signature = {};
 
@@ -1199,9 +1055,7 @@ function motqnGenerateAnalysisSignature(fileId, fileData) {
                 return null;
         }
 
-        var canonical = motqnCanonicalizeSignatureRecord(signature);
-
-        return canonical.length ? canonical : null;
+        return JSON.stringify(signature);
 }
 
 function motqnIsStaleAnalysis(fileId, analysisToken) {
@@ -1589,21 +1443,8 @@ function p3dAnalyseModelBulk(file_id) {
         }
 
         var currentSignature = motqnGenerateAnalysisSignature(file_id, fileData);
-        var lastSignature = motqnNormalizeStoredSignature(fileData ? fileData.last_analysis_signature : null);
-        var pendingSignature = motqnNormalizeStoredSignature(fileData ? fileData.pending_analysis_signature : null);
-
-        if (lastSignature && fileData && fileData.last_analysis_signature !== lastSignature) {
-                fileData.last_analysis_signature = lastSignature;
-        }
-
-        if (fileData) {
-                if (pendingSignature && fileData.pending_analysis_signature !== pendingSignature) {
-                        fileData.pending_analysis_signature = pendingSignature;
-                }
-                else if (!pendingSignature && typeof fileData.pending_analysis_signature !== 'undefined') {
-                        delete fileData.pending_analysis_signature;
-                }
-        }
+        var lastSignature = fileData ? fileData.last_analysis_signature : null;
+        var pendingSignature = fileData ? fileData.pending_analysis_signature : null;
 
         if (currentSignature && lastSignature === currentSignature && (!pendingSignature || pendingSignature === lastSignature)) {
                 if (fileData.analyse_status !== 1) {
@@ -1672,20 +1513,8 @@ function p3dHasPendingBulkAnalysis() {
                 }
 
                 if (typeof(fileData.analyse_status)!='undefined' && fileData.analyse_status===0) {
-                        var lastSignature = motqnNormalizeStoredSignature(fileData.last_analysis_signature || null);
-                        var pendingSignature = motqnNormalizeStoredSignature(fileData.pending_analysis_signature || null);
-
-                        if (fileData) {
-                                if (lastSignature && fileData.last_analysis_signature !== lastSignature) {
-                                        fileData.last_analysis_signature = lastSignature;
-                                }
-                                if (pendingSignature && fileData.pending_analysis_signature !== pendingSignature) {
-                                        fileData.pending_analysis_signature = pendingSignature;
-                                }
-                                else if (!pendingSignature && typeof fileData.pending_analysis_signature !== 'undefined') {
-                                        delete fileData.pending_analysis_signature;
-                                }
-                        }
+                        var lastSignature = fileData.last_analysis_signature || null;
+                        var pendingSignature = fileData.pending_analysis_signature || null;
 
                         if (lastSignature) {
                                 var currentSignature = motqnGenerateAnalysisSignature(fileId, fileData);
