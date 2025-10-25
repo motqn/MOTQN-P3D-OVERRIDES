@@ -1056,15 +1056,17 @@ used as it is.
                                                                                 '<div class="plupload_file_image">'+html_thumb+'</div>' +
                                                                                 '<div class="plupload_file_meta">' +
                                                                                         '<div class="plupload_file_status" data-state="' + status_state + '">' + html_status + '</div>' +
-                                                                                        '<div class="plupload_file_size">' + plupload.formatSize(file.size) + '</div>' +
                                                                                         '<div class="plupload_model_info" data-state="' + (has_model_stats ? 'ready' : 'empty') + '">' +
-                                                                                                '<div class="plupload_model_info__body">' + html_stats + '</div>' +
+                                                                                                        '<div class="plupload_model_info__body">' + html_stats + '</div>' +
                                                                                         '</div>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                         '<div class="motqn-file-card__details">' +
                                                                                 '<div class="motqn-file-card__header">' +
-                                                                                        '<div class="plupload_file_name"><span class="plupload_file_model_name">' + file.name + '&nbsp;<a class="plupload_info_icon" href="#" onclick="return false;" class="plupload-button" style="'+stats_style+'"></a></span></div>' +
+                                                                                        '<div class="plupload_file_name">' +
+                                                                                                '<span class="plupload_file_model_name">' + file.name + '<a class="plupload_info_icon plupload-button" href="#" onclick="return false;" style="' + stats_style + '"></a></span>' +
+                                                                                                '<span class="plupload_file_size">' + plupload.formatSize(file.size) + '</span>' +
+                                                                                        '</div>' +
                                                                                         '<div class="plupload_file_action"><a class="p3d-file-action" href="#"></a></div>' +
                                                                                 '</div>' +
                                                                                 '<div class="motqn-file-card__options">' +
