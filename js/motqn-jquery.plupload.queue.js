@@ -944,13 +944,13 @@ used as it is.
 */
 //console.log(file.status);
 						var file_ext = file.name.split('.').pop().toLowerCase();
-						var material_attribute = $('#p3d_materials_bulk_template').html();
-						var printer_attribute = $('#p3d_printers_bulk_template').html();
-						var coating_attribute = $('#p3d_coatings_bulk_template').html();
-						var infill_attribute = $('#p3d_infills_bulk_template').html();
-						var postprocessing_attribute = $('#p3d_postprocessings_bulk_template').html();
-						var custom_attribute = $('#p3d_custom_attributes_bulk_template tbody').html();
-						var unit_attribute = $('#p3d_units_bulk_template').html();
+                                                var material_attribute = $('#p3d_materials_bulk_template').html();
+                                                var printer_attribute = $('#p3d_printers_bulk_template').html();
+                                                var coating_attribute = $('#p3d_coatings_bulk_template').html();
+                                                var infill_attribute = $('#p3d_infills_bulk_template').html();
+                                                var postprocessing_attribute = $('#p3d_postprocessings_bulk_template').html();
+                                                var custom_attribute = $('#p3d_custom_attributes_bulk_template tbody').html();
+                                                var unit_attribute = $('#p3d_units_bulk_template').html();
                                                 var qty_label = 'Quantity';
 
                                                 if (typeof p3d.text_bulk_qty !== 'undefined') {
@@ -959,24 +959,29 @@ used as it is.
                                                         qty_label = p3d.text_bulk_quantity;
                                                 }
 
+                                                if (typeof(file.price) === 'undefined') {
+                                                        file.price = 0;
+                                                }
+
+                                                var unit_price_display = file.price;
+                                                var total_price_display = file.price;
+
                                                 var attributes = '<table class="p3d-stats-bulk">';
-                                                var qty_row = '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div></td></tr>';
 
-						if (p3d.selection_order=='materials_printers') {
-							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
-							attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
-						}
-						else if (p3d.selection_order=='printers_materials') {
-							attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
-							attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
-						}
+                                                if (p3d.selection_order=='materials_printers') {
+                                                        attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
+                                                        attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
+                                                }
+                                                else if (p3d.selection_order=='printers_materials') {
+                                                        attributes += '<tr style="'+(p3d.show_printers!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_printer+'</td><td>'+printer_attribute+'</td></tr>';
+                                                        attributes += '<tr style="'+(p3d.show_materials!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_material+'</td><td>'+material_attribute+'</td></tr>';
+                                                }
 
-						attributes += '<tr style="'+(p3d.show_coatings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_coating+'</td><td>'+coating_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_infills!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_infill+'</td><td>'+infill_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_postprocessings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_postprocessing+'</td><td>'+postprocessing_attribute+'</td></tr>';
-						attributes += '<tr style="'+(p3d.show_scale!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_unit+'</td><td>'+unit_attribute+'</td></tr>';
+                                                attributes += '<tr style="'+(p3d.show_coatings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_coating+'</td><td>'+coating_attribute+'</td></tr>';
+                                                attributes += '<tr style="'+(p3d.show_infills!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_infill+'</td><td>'+infill_attribute+'</td></tr>';
+                                                attributes += '<tr style="'+(p3d.show_postprocessings!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_postprocessing+'</td><td>'+postprocessing_attribute+'</td></tr>';
 
-						if (file_ext=='dxf' || file_ext=='svg' || file_ext=='eps' || file_ext=='pdf') {
+                                                if (file_ext=='dxf' || file_ext=='svg' || file_ext=='eps' || file_ext=='pdf') {
 							//inject cutting instructions here
 							//var cutting_instructions_html = '<div class="p3d-cutting-instructions">'+p3d.text_cutting_instructions;
 							var selects_html='';
@@ -1016,17 +1021,6 @@ used as it is.
                                                         attributes += custom_attribute;
                                                 }
 
-                                                attributes += qty_row;
-
-                                                if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
-						//todo custom attrs
-
-						attributes += '</table>';
-						if (typeof(file.price)=='undefined') file.price = 0;
-
-                                                var unit_price_display = file.price;
-                                                var total_price_display = file.price;
-
 						if (file.percent==99 && file.status==5) {
 							file.percent = 100;
 						}
@@ -1040,7 +1034,7 @@ used as it is.
                                                 var html_thumb = '';
                                                 var status_state = 'idle';
 
-						if (typeof(p3d.analyse_queue[file.id])!='undefined') {
+                                                if (typeof(p3d.analyse_queue[file.id])!='undefined') {
                                                         if (typeof(p3d.analyse_queue[file.id].html_price_unit)!='undefined') {
                                                                 unit_price_display = p3d.analyse_queue[file.id].html_price_unit;
                                                         }
@@ -1073,12 +1067,19 @@ used as it is.
                                                                         html_stats = default_stats_message;
                                                                 }
                                                         }
-							if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
-								html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
-							}
+                                                        if (typeof(p3d.analyse_queue[file.id].thumbnail_url)!='undefined') {
+                                                                html_thumb = '<a target="_blank" href="'+p3d.analyse_queue[file.id].thumbnail_url+'"><img class="plupload_model_image" src="'+p3d.analyse_queue[file.id].thumbnail_url+'"></a>';
+                                                        }
 
 
                                                 }
+                                                attributes += '<tr style="'+(p3d.show_scale!="on" ? "display:none;" : "")+'"><td>'+p3d.text_bulk_unit+'</td><td><div class="motqn-option-field motqn-option-field--unit">'+unit_attribute+'<span class="plupload_file_price-tag plupload_file_price-tag--unit"><span class="plupload_file_price-tag-label">Unit price</span><span class="plupload_file_price-tag-value">'+unit_price_display+'</span></span></div></td></tr>';
+                                                attributes += '<tr class="p3d-row-qty"><td>' + qty_label + '</td><td><div class="motqn-option-field motqn-option-field--qty"><div class="plupload_file_qty"><input name="' + file.id + '_qty" type="number" min="1" step="1" value="1" onchange="p3dSelectQTYBulk(this)" oninput="p3dSelectQTYBulk(this)"></div><span class="plupload_file_price-tag plupload_file_price-tag--total"><span class="plupload_file_price-tag-label">Total price</span><span class="plupload_file_price-tag-value">' + total_price_display + '</span></span></div></td></tr>';
+
+                                                if (p3d.pricing!='checkout') attributes += '<tr><td>Notes</td><td><textarea onchange=p3dSaveComments(this) class="p3d-bulk-comments" rows="2"></textarea></td></tr>';
+                                                //todo custom attrs
+
+                                                attributes += '</table>';
                                                 if (status_state=='idle') {
                                                         if (file.status == plupload.UPLOADING) {
                                                                 status_state = 'uploading';
@@ -1116,16 +1117,6 @@ used as it is.
                                                                                 '</div>' +
                                                                                 '<div class="motqn-file-card__options">' +
                                                                                         attributes +
-                                                                                '</div>' +
-                                                                                '<div class="plupload_file_price">' +
-                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--unit">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Unit price</span>' +
-                                                                                                '<span class="plupload_file_price-tag-value">' + unit_price_display + '</span>' +
-                                                                                        '</span>' +
-                                                                                        '<span class="plupload_file_price-tag plupload_file_price-tag--total">' +
-                                                                                                '<span class="plupload_file_price-tag-label">Total price</span>' +
-                                                                                                '<span class="plupload_file_price-tag-value">' + total_price_display + '</span>' +
-                                                                                        '</span>' +
                                                                                 '</div>' +
                                                                         '</div>' +
                                                                 '</div>' +
