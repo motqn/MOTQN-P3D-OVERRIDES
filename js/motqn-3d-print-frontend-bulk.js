@@ -64,23 +64,26 @@ jQuery(function() {
 		]
 		},
 		init: {
-			FilesRemoved:  function(p3d_uploader, files) {
-				if(files.length > 0) {
-					for (var i=0;i<files.length;i++) {
-						var file_id = files[i].id
-						if (typeof(p3d.analyse_queue[file_id])!='undefined') {
-							delete p3d.analyse_queue[file_id];
-						}
-					}
-				}
-			},
-			QueueChanged: function(p3d_uploader) {
-				if (p3d_uploader.files.length==0) {
-					jQuery('#p3d-calculate-price-button').prop('disabled', true);
-					jQuery('#p3d-calculate-loader').hide();
-					jQuery('#p3d-submit-button').prop('disabled', true);
-				}
-			},
+                        FilesRemoved:  function(p3d_uploader, files) {
+                                if(files.length > 0) {
+                                        for (var i=0;i<files.length;i++) {
+                                                var file_id = files[i].id
+                                                if (typeof(p3d.analyse_queue[file_id])!='undefined') {
+                                                        delete p3d.analyse_queue[file_id];
+                                                }
+                                        }
+                                }
+
+                                motqnUpdateSummaryTotals(jQuery('#' + p3d_uploader.settings.container).closest('.motqn-uploader'));
+                        },
+                        QueueChanged: function(p3d_uploader) {
+                                if (p3d_uploader.files.length==0) {
+                                        jQuery('#p3d-calculate-price-button').prop('disabled', true);
+                                        jQuery('#p3d-calculate-loader').hide();
+                                        jQuery('#p3d-submit-button').prop('disabled', true);
+                                        motqnUpdateSummaryTotals(jQuery('#' + p3d_uploader.settings.container).closest('.motqn-uploader'));
+                                }
+                        },
 			PostInit: function() {
 				if ((navigator.platform.indexOf("iPhone") == -1) && (navigator.platform.indexOf("iPad") == -1)) {
 					jQuery('#p3d-bulk-uploader input[type=file]').prop('accept', p3d.file_extensions.split(',').map(i => '.' + i).join(','));
@@ -727,6 +730,8 @@ function p3dSelectQTYBulk(obj) {
                         $input.closest('li[class^=plupload]').find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(formattedTotal);
                 }
         }
+
+        motqnUpdateSummaryTotals($input.closest('.motqn-uploader'));
 }
 
 function motqnFormatCurrency(value) {
@@ -735,6 +740,43 @@ function motqnFormatCurrency(value) {
         }
 
         return accounting.formatMoney(value, p3d.currency_symbol, p3d.price_num_decimals, p3d.thousand_sep, p3d.decimal_sep);
+}
+
+function motqnUpdateSummaryTotals($scope) {
+        var totalPrice = 0;
+        var hasTotals = false;
+
+        jQuery.each(p3d.analyse_queue, function(fileId, fileData) {
+                if (!fileData || typeof fileData.total_price === 'undefined') {
+                        return;
+                }
+
+                var fileTotal = parseFloat(fileData.total_price);
+                if (isNaN(fileTotal)) {
+                        return;
+                }
+
+                totalPrice += fileTotal;
+                hasTotals = true;
+        });
+
+        var $summaryScope = ($scope && $scope.length) ? $scope : jQuery(document);
+        var $totalElement = $summaryScope.find('.plupload_total_price');
+
+        if (!$totalElement.length) {
+                $totalElement = jQuery('.plupload_total_price');
+        }
+
+        if (!$totalElement.length) {
+                return;
+        }
+
+        if (!hasTotals) {
+                $totalElement.html('&nbsp;');
+                return;
+        }
+
+        $totalElement.text(motqnFormatCurrency(totalPrice));
 }
 
 function motqnUpdateStatus($statusEl, message, state) {
@@ -1608,6 +1650,8 @@ function p3dShowResponseBulk(obj, model_stats) {
         var $context = jQuery(obj);
         $context.find('.plupload_file_price-tag--unit .plupload_file_price-tag-value').text(html_unit_price);
         $context.find('.plupload_file_price-tag--total .plupload_file_price-tag-value').text(html_total_price);
+
+        motqnUpdateSummaryTotals($context.closest('.motqn-uploader'));
 }
 
 function p3dSubmitFormBulk() {
