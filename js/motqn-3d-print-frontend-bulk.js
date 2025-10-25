@@ -879,6 +879,104 @@ function motqnResetFilePricing(fileId) {
         }
 }
 
+function motqnGenerateAnalysisSignature(fileId, fileData) {
+        var $item = jQuery('#' + fileId);
+
+        if (!$item.length) {
+                return null;
+        }
+
+        var signature = {};
+
+        var printerId = $item.find('select[name=product_printer]').val();
+        var materialId = $item.find('select[name=product_filament]').val();
+        var infillValue = $item.find('select[name=product_infill]').val();
+        var infillId = $item.find('select[name=product_infill] option:selected').data('infill-id');
+        var unitValue = $item.find('select[name=product_unit]').val();
+        var postProcessing = $item.find('select[name=product_postprocessing]').val();
+
+        if (typeof printerId !== 'undefined') {
+                signature.printer = printerId;
+        }
+        if (typeof materialId !== 'undefined') {
+                signature.material = materialId;
+        }
+        if (typeof infillValue !== 'undefined') {
+                signature.infill = infillValue;
+        }
+        if (typeof infillId !== 'undefined') {
+                signature.infill_id = infillId;
+        }
+        if (typeof unitValue !== 'undefined') {
+                signature.unit = unitValue;
+        }
+        if (typeof postProcessing !== 'undefined') {
+                signature.postprocessing = postProcessing;
+        }
+
+        var cuttingInstructions = [];
+        $item.find('select[name^=p3d_cutting_instructions]').each(function() {
+                var colorKey = jQuery(this).prop('name');
+                var value = jQuery(this).val();
+
+                cuttingInstructions.push({
+                        key: colorKey,
+                        value: value
+                });
+        });
+
+        if (cuttingInstructions.length) {
+                cuttingInstructions.sort(function(a, b) {
+                        return a.key.localeCompare(b.key);
+                });
+                signature.cutting = cuttingInstructions;
+        }
+
+        var customAttributes = [];
+        $item.find('select[name^=attribute_pa]').each(function() {
+                var attributeName = jQuery(this).data('id');
+                var attributeValue = jQuery(this).val();
+
+                customAttributes.push({
+                        name: attributeName,
+                        value: attributeValue
+                });
+        });
+
+        if (customAttributes.length) {
+                customAttributes.sort(function(a, b) {
+                        return (a.name + '').localeCompare(b.name + '');
+                });
+                signature.custom_attributes = customAttributes;
+        }
+
+        if (fileData) {
+                if (typeof fileData.server_name !== 'undefined') {
+                        signature.server_name = fileData.server_name;
+                }
+                if (typeof fileData.dim_x !== 'undefined') {
+                        signature.dim_x = fileData.dim_x;
+                }
+                if (typeof fileData.dim_y !== 'undefined') {
+                        signature.dim_y = fileData.dim_y;
+                }
+                if (typeof fileData.dim_z !== 'undefined') {
+                        signature.dim_z = fileData.dim_z;
+                }
+                if (typeof fileData.image_height !== 'undefined') {
+                        signature.image_height = fileData.image_height;
+                }
+                if (typeof fileData.image_map !== 'undefined') {
+                        signature.image_map = fileData.image_map;
+                }
+                if (typeof fileData.triangulation_required !== 'undefined') {
+                        signature.triangulation_required = !!fileData.triangulation_required;
+                }
+        }
+
+        return JSON.stringify(signature);
+}
+
 function motqnIsStaleAnalysis(fileId, analysisToken) {
         if (typeof analysisToken === 'undefined') {
                 return false;
@@ -902,6 +1000,7 @@ function motqnHandleStaleAnalysis(fileId, analysisToken) {
 
         if (typeof p3d !== 'undefined' && typeof p3d.analyse_queue !== 'undefined' && typeof p3d.analyse_queue[fileId] !== 'undefined') {
                 p3d.analyse_queue[fileId].analyse_status = 0;
+                delete p3d.analyse_queue[fileId].pending_analysis_signature;
         }
 
         p3d.analysing = false;
@@ -1244,15 +1343,21 @@ function p3dAnalyseModelBulk(file_id) {
                 return;
         }
 
-        motqnResetFilePricing(file_id);
-
         var fileData = p3d.analyse_queue[file_id];
+        var currentSignature = motqnGenerateAnalysisSignature(file_id, fileData);
+
+        if (fileData && fileData.analyse_status === 1 && fileData.uploaded && fileData.last_analysis_signature === currentSignature) {
+                return;
+        }
+
+        motqnResetFilePricing(file_id);
 
         if (typeof fileData.analysisToken === 'undefined') {
                 fileData.analysisToken = 0;
         }
 
         fileData.analysisToken++;
+        fileData.pending_analysis_signature = currentSignature;
 
         clearInterval(p3d.refresh_interval);
 
@@ -1463,15 +1568,16 @@ p3d.analyse_queue[file_id].dim_x
                                 return;
                         }
 
-                        if (typeof(data.error)!=='undefined') {
-                                p3d.analysing = false;
-                                jQuery('#p3d-submit-button').prop('disabled', false);
-                                fileData.analyse_status = -1;
-                                if (data.error.code==120) {
-                                        if (p3d.pricing_too_large=='request') {
-                                                fileData.fatal_error = 1;
-                                                fileData.new_pricing = 'request';
-                                        }
+                                if (typeof(data.error)!=='undefined') {
+                                        p3d.analysing = false;
+                                        jQuery('#p3d-submit-button').prop('disabled', false);
+                                        fileData.analyse_status = -1;
+                                        delete fileData.pending_analysis_signature;
+                                        if (data.error.code==120) {
+                                                if (p3d.pricing_too_large=='request') {
+                                                        fileData.fatal_error = 1;
+                                                        fileData.new_pricing = 'request';
+                                                }
                                 }
                                 else if (data.error.code==121) {
                                         if (p3d.pricing_too_small=='request') {
@@ -1506,10 +1612,10 @@ p3d.analyse_queue[file_id].dim_x
 
                         }
                         else if (data.status == '1') { //success, no API
-				//todo also add PHP model stats
-				p3d.analysing = false;
-				p3d.checking = false;
-				p3d.analyse_error = false;
+                                //todo also add PHP model stats
+                                p3d.analysing = false;
+                                p3d.checking = false;
+                                p3d.analyse_error = false;
 
 				p3d.triangulated_volume = data.material_volume;
                                 p3d.triangulated_surface_area = data.surface_area;
@@ -1520,6 +1626,8 @@ p3d.analyse_queue[file_id].dim_x
                                 }
 
                                 p3dShowResponseBulk(obj, data);
+                                fileData.last_analysis_signature = fileData.pending_analysis_signature || motqnGenerateAnalysisSignature(file_id, fileData);
+                                delete fileData.pending_analysis_signature;
                                 fileData.analyse_status = 1;
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), p3d.text_bulk_analysing+' 100%', 'complete');
 
@@ -1648,17 +1756,18 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
                                 return;
                         }
 
-                        if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
-                                p3d.analyse_error = true;
-                                p3d.analysing = false;
-                                motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
-                                if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
-                                fileData.analyse_status = -1;
-                                //p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
+                                if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)=='undefined') {
+                                        p3d.analyse_error = true;
+                                        p3d.analysing = false;
+                                        motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
+                                        if (p3d.pricing_api_expired=='request') p3d.fatal_error=1;
+                                        fileData.analyse_status = -1;
+                                        delete fileData.pending_analysis_signature;
+                                        //p3dNewPricingBulk('', p3d.pricing_api_expired, obj);
 
-                                if (p3d.pricing_api_expired=='request') {
-                                        fileData.fatal_error = 1;
-                                        fileData.new_pricing = 'request';
+                                        if (p3d.pricing_api_expired=='request') {
+                                                fileData.fatal_error = 1;
+                                                fileData.new_pricing = 'request';
                                 }
                                 p3dCheckAllFinished();
                                 clearInterval(p3d.refresh_interval);
@@ -1666,6 +1775,7 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
                         else if (typeof(data.error)!=='undefined' && typeof(data.error.new_pricing)!=='undefined') {
                                 motqnUpdateStatus(jQuery(obj).find('.plupload_file_status'), data.error.message, 'error');
                                 fileData.analyse_status = -1;
+                                delete fileData.pending_analysis_signature;
                                 fileData.fatal_error = 1;
                                 fileData.new_pricing = data.error.new_pricing;
                         }
@@ -1683,10 +1793,13 @@ function p3danalyseCheckBulk(filename, server, obj, analysisToken) {
                                 if (typeof(data.print_time)!='undefined' && data.print_time==0 && p3d.api_analyse=='on') {
                                         if (p3d.pricing_print_time_zero=='request') {
                                                 fileData.analyse_status = -1;
+                                                delete fileData.pending_analysis_signature;
                                                 fileData.fatal_error = 1;
                                                 fileData.new_pricing = 'request';
                                         }
                                 }
+                                fileData.last_analysis_signature = fileData.pending_analysis_signature || motqnGenerateAnalysisSignature(file_id, fileData);
+                                delete fileData.pending_analysis_signature;
                                 fileData.analyse_status = 1;
 
                                 p3dCheckAllFinished();
