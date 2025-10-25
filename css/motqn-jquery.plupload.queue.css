@@ -282,8 +282,8 @@
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    flex: 0 0 260px;
-    max-width: 260px;
+    flex: 0 0 300px;
+    max-width: 300px;
 }
 
 .motqn-file-card__details {
@@ -303,9 +303,10 @@
 }
 
 .motqn-file-card__options {
-    width: 100%;
-    max-width: 540px;
+    width: auto;
+    max-width: 600px;
     align-self: flex-start;
+    margin-left: auto;
 }
 
 .motqn-card-list li:not(.plupload_droptext) .plupload_file_name,
@@ -1111,7 +1112,9 @@ body.motqn-has-custom-bulk-uploader .select2-container {
     }
 
     .motqn-file-card__options {
+        width: 100%;
         max-width: 100%;
+        margin-left: 0;
     }
 }
 
